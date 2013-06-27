@@ -8,7 +8,9 @@ import tulip
 from tulip.http import server
 from tulip.http import errors
 from tulip.test_utils import run_briefly
-from srv import HttpServer
+from server import HttpServer
+from router import Router
+from static_handler import StaticFileHandler
 
 
 class HttpServerTest(unittest.TestCase):
@@ -22,7 +24,7 @@ class HttpServerTest(unittest.TestCase):
     def test_handle_request(self):
         transport = unittest.mock.Mock()
 
-        srv = HttpServer()
+        srv = HttpServer(Router())
         srv.connection_made(transport)
 
         rline = unittest.mock.Mock()
@@ -39,6 +41,26 @@ class HttpServerTest(unittest.TestCase):
         print(content)
         #self.assertTrue(content.startswith(b'HTTP/1.1 404 Not Found\r\n'))
 
+    def test_static_handler(self):
+        transport = unittest.mock.Mock()
+        router = Router()
+        router.add_handler(
+            "^/static/(.*)", StaticFileHandler("./static"))
+        srv = HttpServer(router)
+        srv.connection_made(transport)
+
+        rline = unittest.mock.Mock()
+        rline.version = (1, 1)
+        message = unittest.mock.Mock()
+        srv.handle_request(rline, message)
+
+        srv.stream.feed_data(
+            b'GET /static/test.html HTTP/1.0\r\n'
+            b'Host: example.com\r\n\r\n')
+        #print(content)
+        self.loop.run_until_complete(srv._request_handler)
+        content = b''.join([c[1][0] for c in list(transport.write.mock_calls)[2:-1]])
+        print(content)
 class HttpServerProtocolTests(unittest.TestCase):
 
     def setUp(self):
