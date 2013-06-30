@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+
+
 """Simple server written using an event loop."""
 
 import argparse
@@ -20,8 +22,10 @@ import tulip.http
 from urllib.parse import urlparse
 
 from static_handler import StaticFileHandler
+from home_handler import HomeHandler
 from router import Router
 from server import HttpServer
+from multithreading import Superviser
 
 
 
@@ -31,7 +35,7 @@ ARGS.add_argument(
     default='127.0.0.1', help='Host name')
 ARGS.add_argument(
     '--port', action="store", dest='port',
-    default=8888, type=int, help='Port number')
+    default=9999, type=int, help='Port number')
 ARGS.add_argument(
     '--iocp', action="store_true", dest='iocp', help='Windows IOCP event loop')
 ARGS.add_argument(
@@ -40,7 +44,15 @@ ARGS.add_argument(
     '--sslcert', action="store", dest='certfile', help='SSL cert file.')
 ARGS.add_argument(
     '--sslkey', action="store", dest='keyfile', help='SSL key file.')
+ARGS.add_argument(
+    '--workers', action="store", dest='workers',
+    default=1, type=int, help='Number of workers.')
+ARGS.add_argument(
+    '--staticroot', action="store", dest='staticroot',
+    default='./static/', type=str, help='Static root.')
 
+def configure_logging():
+    logging.basicConfig(level=logging.DEBUG)
 
 def main():
     args = ARGS.parse_args()
@@ -70,18 +82,17 @@ def main():
         sslcontext.load_cert_chain(certfile, keyfile)
     else:
         sslcontext = None
+        
+    def protocol_factory():
+        router = Router()
+        router.add_handler('/favicon.ico', StaticFileHandler(args.staticroot))
+        router.add_handler('/(.*)', HomeHandler())
+        return HttpServer(router, debug=True, keep_alive=75)
 
-    loop = tulip.get_event_loop()
-    f = loop.start_serving(
-        lambda: HttpServer(debug=True, keep_alive=75), args.host, args.port,
-        ssl=sslcontext)
-    socks = loop.run_until_complete(f)
-    print('serving on', socks[0].getsockname())
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
+    superviser = Superviser(args)
+    superviser.start(protocol_factory, sslcontext)
 
 
 if __name__ == '__main__':
+    configure_logging()
     main()

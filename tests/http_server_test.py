@@ -1,8 +1,8 @@
-from debug import pprint, shell, profile, debug as sj_debug
 """Tests for http/server.py"""
 
 import unittest
 import unittest.mock
+import re
 
 import tulip
 from tulip.http import server
@@ -11,7 +11,16 @@ from tulip.test_utils import run_briefly
 from server import HttpServer
 from router import Router
 from static_handler import StaticFileHandler
+from base_handler import BaseHandler
+from home_handler import HomeHandler
 
+class MockHttpServer(HttpServer):
+    """Wrap server class with mocking support
+    """
+    def handle_error(self, *args, **kwargs):
+        if self.transport.__class__.__name__ == 'Mock':
+            self.transport.reset_mock()
+        super(HttpServer, self).handle_error(*args, **kwargs)
 
 class HttpServerTest(unittest.TestCase):
     def setUp(self):
@@ -23,44 +32,67 @@ class HttpServerTest(unittest.TestCase):
 
     def test_handle_request(self):
         transport = unittest.mock.Mock()
-
-        srv = HttpServer(Router())
+        srv = MockHttpServer(Router())
         srv.connection_made(transport)
-
         rline = unittest.mock.Mock()
         rline.version = (1, 1)
         message = unittest.mock.Mock()
         srv.handle_request(rline, message)
-
         srv.stream.feed_data(
             b'GET / HTTP/1.0\r\n'
             b'Host: example.com\r\n\r\n')
-        #print(content)
         self.loop.run_until_complete(srv._request_handler)
-        content = b''.join([c[1][0] for c in list(transport.write.mock_calls)[2:-1]])
-        print(content)
-        #self.assertTrue(content.startswith(b'HTTP/1.1 404 Not Found\r\n'))
 
-    def test_static_handler(self):
+        content = b''.join([c[1][0] for c in list(transport.write.mock_calls)])
+        print("resp", repr(content))
+        self.assertTrue(content.startswith(b'HTTP/1.1 404 Not Found\r\n'))
+
+
+    def _base_handler_test(self, urlregx, handler, testcontent, url=b'/',
+                           expected_code=200):
         transport = unittest.mock.Mock()
         router = Router()
         router.add_handler(
-            "^/static/(.*)", StaticFileHandler("./static"))
-        srv = HttpServer(router)
+            urlregx, handler)
+        srv = MockHttpServer(router)
         srv.connection_made(transport)
-
         rline = unittest.mock.Mock()
         rline.version = (1, 1)
         message = unittest.mock.Mock()
         srv.handle_request(rline, message)
-
-        srv.stream.feed_data(
-            b'GET /static/test.html HTTP/1.0\r\n'
+        srv.stream.feed_data(b'GET ')
+        srv.stream.feed_data(url)
+        srv.stream.feed_data(b' HTTP/1.0\r\n' 
             b'Host: example.com\r\n\r\n')
-        #print(content)
         self.loop.run_until_complete(srv._request_handler)
-        content = b''.join([c[1][0] for c in list(transport.write.mock_calls)[2:-1]])
+            
+        header = transport.write.mock_calls[0][1][0].decode('utf-8')
+        code = int(re.match("^HTTP/1.1 (\d+) ", header).groups()[0])
+        print(code)
+        self.assertEquals(code, expected_code, )
+        headers = re.findall(r"(?P<name>.*?): (?P<value>.*?)\r\n", header)
+        content = b''.join([c[1][0] for c in list(transport.write.mock_calls)[2:-2]])
         print(content)
+        self.assertEqual(content, testcontent)
+        transport = None
+        
+
+    def test_static_handler(self):
+        with open("./tests/static/test.html", 'rb') as fp:
+            testcontent = fp.read()
+        self._base_handler_test(
+            "^/static/(.*)", 
+            StaticFileHandler("./tests/static"), 
+            testcontent,
+            b"/static/test.html")
+
+    def test_base_handler(self):
+        self._base_handler_test("^/(.*)", BaseHandler(), b"base handler")
+
+    def test_home_handler(self):
+        self._base_handler_test("^/(.*)", HomeHandler(), b"home handler")
+        
+
 class HttpServerProtocolTests(unittest.TestCase):
 
     def setUp(self):

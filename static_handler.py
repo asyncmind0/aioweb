@@ -2,17 +2,19 @@ import os
 import tulip
 import tulip.http
 import email.message
+from base_handler import BaseHandler
 
-class StaticFileHandler(object):
+class StaticFileHandler(BaseHandler):
     def __init__(self, staticroot):
+        super(StaticFileHandler, self).__init__(write_headers=False)
         self.staticroot = staticroot
-    def __call__(self, server, message, payload, 
-                 request_args=None, prev_response=None):
+
+    def __call__(self, request_args=None):
         #path = message.path
         if request_args:
             request_args = request_args[0]
 
-        path = request_args or message.path
+        path = request_args or self.request.path
 
         if (not path.isprintable() or '/.' in path):
             print('bad path', repr(path))
@@ -39,7 +41,7 @@ class StaticFileHandler(object):
                 302, headers=(('URI', path), ('Location', path)))
 
         response = tulip.http.Response(
-            server.transport, 200, close=True)
+            self.server.transport, 200, close=True)
         response.add_header('Transfer-Encoding', 'chunked')
 
         # content encoding
