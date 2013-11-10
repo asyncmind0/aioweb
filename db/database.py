@@ -115,5 +115,28 @@ class CouchDBAdapter(DatabaseAdapter):
         data = yield from response.read(decode=True)
         return Bunch(**data)
 
-    def view(self, name, wrapper=None, **options):
-        return self.db.view(name, wrapper, **options)
+        
+    def put_design_doc(self, ddoc_name, ddoc, **options):
+        posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
+        print(posturl)
+        response = yield from tulip.http.request(
+            'PUT', posturl, data=json.dumps(ddoc), 
+            headers={
+                'Accept':'application/json',
+                'content-type':'application/json'
+            })
+        data = yield from response.read(decode=True)
+        return Bunch(**data)
+
+    def view(self, ddoc, view, **options):
+        viewurl = urljoin(self._dburl, "_design/%s/_view/%s" % (ddoc, view))
+        if options:
+            query = urlencode(options)
+            viewurl ="%s?%s" % (viewurl, query)
+        response = yield from tulip.http.request(
+            'GET', viewurl,
+            headers={
+                'Accept':'application/json',
+            })
+        data = yield from response.read(decode=True)
+        return Bunch(**data)

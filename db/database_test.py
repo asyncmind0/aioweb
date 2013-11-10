@@ -69,5 +69,31 @@ class CouchDBAdapterTest(unittest.TestCase):
             r = self.loop.run_until_complete(self.db.get(document.id))
             assert r.reason == 'deleted'
 
-    def test_view(self):
+    def test_put_design_doc(self):
         with test_utils.run_test_server(self.loop) as httpd:
+            document = {
+                'views':{
+                    'all': {
+                        "map": """
+                            function(doc){
+                                if(doc.doc_type == "User")
+                                emit(doc._id, doc);
+                            }
+                        """
+                    }
+                }
+            }
+
+            r = self.loop.run_until_complete(
+                self.db.put_design_doc('user', document))
+            assert r.ok == True
+
+    def test_view(self):
+        self.test_put_design_doc()
+        with test_utils.run_test_server(self.loop) as httpd:
+            document = {'doc_type':'User'}
+            r1 = self.loop.run_until_complete(self.db.put(document))
+            self.assertEqual(r1.ok, True)
+            r = self.loop.run_until_complete(self.db.view("user", "all"))
+            assert r.total_rows > 0
+            assert r.rows[0]['id'] == r1.id
