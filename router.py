@@ -17,3 +17,8 @@ class Router(object):
             if match:
                 return handler, match.groups()
         return None, None
+        
+        
+    def get_error_handler(self, url, exception):
+        """Default router error handler"""
+        return "TODO Error information"

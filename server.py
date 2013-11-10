@@ -25,10 +25,17 @@ class HttpServer(tulip.http.ServerHttpProtocol):
         handlers, args = self.router.get_handler(message.path)
         if handlers:
             for handler in handlers:
-                logging.debug("handler: %s", handler)
-                handler.initialize(self, message, payload, prev_response=response)
-                result = handler(request_args=args)
-                response = handler.response
+                try:
+                    logging.debug("handler: %s", handler)
+                    handler.initialize(self, message, payload, prev_response=response)
+                except Exception as e:
+                    response = self.router.handle_error(e)
+                else:
+                    try:
+                        result = handler(request_args=args)
+                        response = handler.response
+                    except Exception as e:
+                        response = handler.handle_error(e, request_args=args)
             if not response:
                 raise tulip.http.HttpStatusException(404, message="No Handler found")
         else:

@@ -18,7 +18,7 @@ class BaseHandler(object):
             self.response = self._write_headers()
 
     def __call__(self, request_args=None):
-        response.write(b'base handler')
+        self.response.write(b'base handler')
         return response
 
     @property
@@ -54,3 +54,8 @@ class BaseHandler(object):
     def render(self, template, **data):
         self.response.write(self.renderer.render('home', **data))
 
+
+        
+    def handle_error(self, exception, request_args=None):
+        """Default handler exception handler"""
+        self.response.write(b"Error: %s" % str(exception))

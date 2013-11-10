@@ -1,0 +1,9 @@
+#TULIPSERVER -*- mode: org -*-
+#+STARTUP: hidestars, content
+** TODO make app phonegap ready/dojo mobile
+** TODO write python unittests 
+** TODO write functional tests using dojo.js
+** TODO research grunt
+
+* Refs:
+  http://daker.me/2013/07/testing-your-responsive-design-with-phantomjs.html
