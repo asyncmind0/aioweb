@@ -118,12 +118,35 @@ class CouchDBAdapter(DatabaseAdapter):
         
     def put_design_doc(self, ddoc_name, ddoc, **options):
         posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
-        print(posturl)
         response = yield from tulip.http.request(
             'PUT', posturl, data=json.dumps(ddoc), 
             headers={
                 'Accept':'application/json',
                 'content-type':'application/json'
+            })
+        data = yield from response.read(decode=True)
+        return Bunch(**data)
+
+    def get_design_doc(self, ddoc_name, **options):
+        posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
+        response = yield from tulip.http.request(
+            'GET', posturl,
+            headers={
+                'Accept':'application/json',
+            })
+        data = yield from response.read(decode=True)
+        return Bunch(**data)
+
+    def delete_design_doc(self, ddoc_name, rev=None, **options):
+        if rev == None:
+            rev = yield from self.get_design_doc(ddoc_name)
+            rev = rev._rev
+        posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
+        url = '%s?rev=%s' % (posturl, quote(rev))
+        response = yield from tulip.http.request(
+            'DELETE', url,
+            headers={
+                'Accept':'application/json'
             })
         data = yield from response.read(decode=True)
         return Bunch(**data)
