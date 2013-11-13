@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">	
+        <title>PAGE TITLE</title>
+        <!--[if lt IE 9]>
+        <script src="/static/js/html5shiv-printshiv.js" media="all"></script><![endif]-->
+    </head>
+    <body>
+        <!-- This is a VERY bare bones version of a HTML5 template! -->
+        <h1>Nutrition Tracker</h1>
+        <form action="/search">
+            <input type='text'>
+            <input type='submit'>
+        </form>
+        <form action="/add_food">
+            <input type='text' name='name'>
+            <select name='nutrients'>
+                {{#nutrients}}
+                    <option value={{tag}}>{{name}}</option>
+                {{/nutrients}}
+            </select>
+            <input type='submit'>
+        </form>
+        <ol>
+            {{#query}}
+                <li>{{key}}:{{value}}</li>
+            {{/query}}
+        </ol>
+    </body>
+</html>

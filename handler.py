@@ -4,10 +4,14 @@ import email.message
 from urllib.parse import urlparse
 import cgi
 
-class BaseHandler(object):
-    def __init__(self, write_headers=True):
+
+class Handler(object):
+    request = None
+
+    def __init__(self, db=None, write_headers=True):
         self.response = None
         self.write_headers = write_headers
+        self.db = db
 
     def initialize(self, server, message, payload, prev_response=None):
         self.server = server
@@ -19,10 +23,12 @@ class BaseHandler(object):
 
     def __call__(self, request_args=None):
         self.response.write(b'base handler')
-        return response
+        return self.response
 
     @property
     def query(self):
+        if not self.request:
+            return {}
         parsed = urlparse(self.request.path)
         querydict = cgi.parse_qs(parsed.query)
         for key, value in querydict.items():
@@ -50,12 +56,13 @@ class BaseHandler(object):
         response.add_header('Content-type', 'text/html')
         response.send_headers()
         return response
-        
+
     def render(self, template, **data):
         self.response.write(self.renderer.render('home', **data))
 
-
-        
     def handle_error(self, exception, request_args=None):
         """Default handler exception handler"""
-        self.response.write(b"Error: %s" % str(exception))
+        if not self.response:
+            self.response = self._write_headers()
+
+        self.response.write(("Error: %s" % str(exception)).encode('utf-8'))

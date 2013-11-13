@@ -2,15 +2,16 @@ import os
 import tulip
 import tulip.http
 import email.message
-from base_handler import BaseHandler
+from handler import Handler
 
-class StaticFileHandler(BaseHandler):
+
+class StaticFileHandler(Handler):
     def __init__(self, staticroot):
         super(StaticFileHandler, self).__init__(write_headers=False)
         self.staticroot = staticroot
 
     def __call__(self, request_args=None):
-        #path = message.path
+        # path = message.path
         if request_args:
             request_args = request_args[0]
 
@@ -87,4 +88,3 @@ class StaticFileHandler(BaseHandler):
             except OSError:
                 response.write(b'Cannot open')
         return response
-

@@ -1,10 +1,10 @@
 import tulip
 import tulip.http
-from base_handler import BaseHandler
+from handler import Handler
 from renderers import HtmlRenderer
 from controller import HomeController
 
-class HomeHandler(BaseHandler):
+class HomeHandler(Handler):
     renderer = HtmlRenderer()
     def __call__(self, request_args=None):
         controller = HomeController()

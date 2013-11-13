@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from debug import pprint, shell, profile, debug as sj_debug
 
 
 
@@ -22,11 +23,12 @@ import tulip.http
 from urllib.parse import urlparse
 
 from static_handler import StaticFileHandler
-from home_handler import HomeHandler
+from supplementme.handler import HomeHandler
 from router import Router
 from server import HttpServer
 from multithreading import Superviser
-
+from config import config
+from db.database import CouchDBAdapter
 
 
 ARGS = argparse.ArgumentParser(description="Run simple http server.")
@@ -51,8 +53,10 @@ ARGS.add_argument(
     '--staticroot', action="store", dest='staticroot',
     default='./static/', type=str, help='Static root.')
 
+
 def configure_logging():
     logging.basicConfig(level=logging.DEBUG)
+
 
 def main():
     args = ARGS.parse_args()
@@ -82,11 +86,14 @@ def main():
         sslcontext.load_cert_chain(certfile, keyfile)
     else:
         sslcontext = None
-        
+
     def protocol_factory():
+        db = CouchDBAdapter(
+            'http://%(username)s:%(password)s@localhost:5984/' %
+            config['couchdb'], 'nutrition', )
         router = Router()
         router.add_handler('/favicon.ico', StaticFileHandler(args.staticroot))
-        router.add_handler('/(.*)', HomeHandler())
+        router.add_handler('/(.*)', HomeHandler(db=db))
         return HttpServer(router, debug=True, keep_alive=75)
 
     superviser = Superviser(args)

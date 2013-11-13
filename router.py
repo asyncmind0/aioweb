@@ -1,6 +1,7 @@
 import re
 import collections
 
+
 class Router(object):
     def __init__(self, handlers=None):
         self.handlers = handlers or []
@@ -8,7 +9,7 @@ class Router(object):
     def add_handler(self, url_regex, handlers):
         self.handlers.append(
             (re.compile(url_regex), 
-             handlers if isinstance(handlers, collections.Iterable) 
+             handlers if isinstance(handlers, collections.Iterable)
              else [handlers]))
 
     def get_handler(self, url):
@@ -17,8 +18,7 @@ class Router(object):
             if match:
                 return handler, match.groups()
         return None, None
-        
-        
+
     def get_error_handler(self, url, exception):
         """Default router error handler"""
         return "TODO Error information"
