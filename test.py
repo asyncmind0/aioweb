@@ -6,10 +6,12 @@ from db.database import CouchDBAdapter
 import tulip
 from tulip import test_utils
 from config import config
+import logging
 
 
 class TestCase(unittest.TestCase):
     def setUp(self):
+        logging.getLogger('tulip').level = logging.ERROR
         self.loop = tulip.new_event_loop()
         tulip.set_event_loop(self.loop)
 
@@ -32,5 +34,5 @@ class CouchDBTestCase(TestCase):
 
     def tearDown(self):
         r = self.loop.run_until_complete(self.db.delete_db())
-        self.assertEqual(r.ok, True)
+        assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
         super(CouchDBTestCase, self).tearDown()

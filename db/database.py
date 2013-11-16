@@ -73,7 +73,7 @@ class CouchDBAdapter(DatabaseAdapter):
             del document['id']
         if '_id' in document:
             del document['_id']
-        if not document['_rev']:
+        if '_rev' in document and not document['_rev']:
             del document['_rev']
         if not doc_id:
             doc_id = str(uuid4())

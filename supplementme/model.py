@@ -22,7 +22,7 @@ class Nutrient(Model):
 
 
 class Food(Model):
-    required_fields = ['name', 'nutrients', 'serving_size']
+    required_fields = ['name', 'nutrients', 'serving_size', 'unit']
     views = {
         'by_name': {
             'map': """

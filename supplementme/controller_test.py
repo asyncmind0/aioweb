@@ -8,14 +8,19 @@ class ControllerTest (CouchDBTestCase):
         super(ControllerTest, self).setUp()
         self.loop.run_until_complete(Nutrient.sync_design(self.db))
         self.controller = NutrientsController(self.db)
+        self.test_nutrients = [
+            Nutrient(number=10, name='vitamin c', tag='vitc', decimal_places=3, unit='mg'),
+            Nutrient(number=10, name='vitamin d', tag='vitd', decimal_places=3, unit='mg')
+        ]
+
 
     def tearDown(self):
         super(ControllerTest, self).tearDown()
 
-    def test_new(self, name='vitamin_c'):
-        post = Nutrient(quantity=10, name=name)
-        r = self.loop.run_until_complete(post.save(self.db))
-        assert hasattr(r, 'ok') and r.ok is True, str(r)
+    def test_new(self):
+        for nut in self.test_nutrients:
+            r = self.loop.run_until_complete(nut.save(self.db))
+            assert hasattr(r, 'ok') and r.ok is True, str(r)
 
     def test_all(self):
         self.test_new()
@@ -23,14 +28,10 @@ class ControllerTest (CouchDBTestCase):
         assert len(r.rows) > 0, str(r)
 
     def test_keys(self):
-        test_names = ['vitamin_d', 'vitamin_c']
-        self.test_new(test_names[0])
-        self.test_new(test_names[0])
-        self.test_new(test_names[0])
-        self.test_new()
         self.test_new()
         r = self.loop.run_until_complete(self.controller.keys())
         assert len(r) > 0, str(r)
+        test_names = [n.name for n in self.test_nutrients]
         self.assertListEqual(sorted(r), sorted(test_names)), str(r)
 
 
@@ -38,6 +39,7 @@ class FoodControllerTest (CouchDBTestCase):
     def setUp(self):
         super(FoodControllerTest, self).setUp()
         self.loop.run_until_complete(Nutrient.sync_design(self.db))
+        self.loop.run_until_complete(Food.sync_design(self.db))
         self.controller = FoodController(self.db)
 
     def tearDown(self):
@@ -46,14 +48,15 @@ class FoodControllerTest (CouchDBTestCase):
     def test_new(self):
         food = Food(name="somefood",
                     nutrients=[['vitamin_c', 10], ['vitamin_d', 20]],
-                    quantity=200)
+                    serving_size=200,
+                    unit='mg')
         r = self.loop.run_until_complete(food.save(self.db))
         assert hasattr(r, 'ok') and r.ok is True, str(r)
 
     def test_all(self):
         self.test_new()
         r = self.loop.run_until_complete(Food.all(self.db))
-        assert len(r.rows) > 0, str(r)
+        assert hasattr(r, 'rows') and len(r.rows) > 0, str(r)
 
     def test_nutrient_totals(self):
         pass

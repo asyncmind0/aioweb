@@ -1,3 +1,4 @@
+from debug import pprint, shell, profile, debug as sj_debug
 """Simple server written using an event loop."""
 
 import argparse
@@ -5,10 +6,12 @@ import email.message
 import logging
 import os
 import sys
+import inspect
 
 import tulip
 import tulip.http
 import cgi
+from errors import ErrorHandlerMixin
 
 
 class HttpServer(tulip.http.ServerHttpProtocol):
@@ -30,21 +33,28 @@ class HttpServer(tulip.http.ServerHttpProtocol):
                     handler.initialize(self, message, payload,
                                        prev_response=response)
                 except Exception as e:
-                    logging.exception(e)
-                    response = self.router.handle_error(e)
+                    return self.handle_error(500, message, payload, exc=e)
+                    #logging.exception(e)
+                    #response = self.router.handle_error(e)
                 else:
                     try:
-                        result = yield from handler(request_args=args)
-                        response = handler.response
+                        response = handler(request_args=args)
+                        if (inspect.isgenerator(response) or
+                            isinstance(response, tulip.Future)):
+                            response = yield from response
+                        if not isinstance(response, tulip.http.Response):
+                            response = handler.response
                     except Exception as e:
-                        logging.exception(e)
-                        response = handler.handle_error(e, request_args=args)
-            if not response:
-                raise tulip.http.HttpStatusException(
-                    404, message="No Handler found")
+                        return self.handle_error(500, message, payload, exc=e)
+                        #response = handler.handle_error(e, message, request_args=args)
+            if not isinstance(response, tulip.http.Response):
+                return self.handle_error(404, message, payload)
         else:
-            raise tulip.http.HttpStatusException(404)
+            return self.handle_error(404, message, payload)
 
         response.write_eof()
         if response.keep_alive():
             self.keep_alive(True)
+
+    def log_access(self, status, message, *args, **kw):
+        logging.debug("%s: %s", status, message.path)

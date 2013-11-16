@@ -3,27 +3,30 @@ import tulip
 import tulip.http
 import email.message
 from handler import Handler
+import mimetypes
 
 
 class StaticFileHandler(Handler):
     def __init__(self, staticroot):
         super(StaticFileHandler, self).__init__(write_headers=False)
         self.staticroot = staticroot
-
+        
     def __call__(self, request_args=None):
         # path = message.path
         if request_args:
             request_args = request_args[0]
 
-        path = request_args or self.request.path
+        path = self.request.path
+        if path.startswith('/'):
+            path = path[1:]
 
         if (not path.isprintable() or '/.' in path):
             print('bad path', repr(path))
             path = None
         else:
             path = os.path.join(self.staticroot, path)
+            self.logger.debug("staticroot:%s", os.path.join(self.staticroot, path))
             if not os.path.exists(path):
-                print('no file', repr(path))
                 path = None
             else:
                 isdir = os.path.isdir(path)
@@ -32,8 +35,7 @@ class StaticFileHandler(Handler):
             raise tulip.http.HttpStatusException(404)
 
         headers = email.message.Message()
-        for hdr, val in message.headers:
-            print(hdr, val)
+        for hdr, val in self.request.headers:
             headers.add_header(hdr, val)
 
         if isdir and not path.endswith('/'):
@@ -76,7 +78,7 @@ class StaticFileHandler(Handler):
                                            b'">' + bname + b'</a></li>\r\n')
             response.write(b'</ul>')
         else:
-            response.add_header('Content-type', 'text/plain')
+            response.add_header('Content-type', mimetypes.guess_type(path)[0])
             response.send_headers()
 
             try:

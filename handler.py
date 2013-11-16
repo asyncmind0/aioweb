@@ -3,15 +3,18 @@ import tulip.http
 import email.message
 from urllib.parse import urlparse
 import cgi
+from errors import ErrorHandlerMixin
+import logging
 
 
-class Handler(object):
+class Handler(ErrorHandlerMixin):
     request = None
 
     def __init__(self, db=None, write_headers=True):
         self.response = None
         self.write_headers = write_headers
         self.db = db
+        self.logger = logging.getLogger(self.__class__.__name__.lower())
 
     def initialize(self, server, message, payload, prev_response=None):
         self.server = server
@@ -57,12 +60,5 @@ class Handler(object):
         response.send_headers()
         return response
 
-    def render(self, template, **data):
-        self.response.write(self.renderer.render('home', **data))
-
-    def handle_error(self, exception, request_args=None):
-        """Default handler exception handler"""
-        if not self.response:
-            self.response = self._write_headers()
-
-        self.response.write(("Error: %s" % str(exception)).encode('utf-8'))
+    def render(self, *args, **data):
+        self.response.write(self.renderer.render(*args, **data))

@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-from debug import pprint, shell, profile, debug as sj_debug
-
-
-
 """Simple server written using an event loop."""
 
 import argparse
@@ -10,6 +6,7 @@ import email.message
 import logging
 import os
 import sys
+import imp
 try:
     import ssl
 except ImportError:  # pragma: no cover
@@ -23,7 +20,6 @@ import tulip.http
 from urllib.parse import urlparse
 
 from static_handler import StaticFileHandler
-from supplementme.handler import HomeHandler
 from router import Router
 from server import HttpServer
 from multithreading import Superviser
@@ -52,10 +48,15 @@ ARGS.add_argument(
 ARGS.add_argument(
     '--staticroot', action="store", dest='staticroot',
     default='./static/', type=str, help='Static root.')
+ARGS.add_argument(
+    '--jsroot', action="store", dest='jsroot',
+    default='./js/', type=str, help='Js root.')
 
 
 def configure_logging():
-    logging.basicConfig(level=logging.DEBUG)
+    #logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+    logging.getLogger().level= logging.DEBUG
+    logging.getLogger('tulip').level= logging.ERROR
 
 
 def main():
@@ -91,9 +92,11 @@ def main():
         db = CouchDBAdapter(
             'http://%(username)s:%(password)s@localhost:5984/' %
             config['couchdb'], 'nutrition', )
+        import supplementme
+        imp.reload(supplementme)
         router = Router()
-        router.add_handler('/favicon.ico', StaticFileHandler(args.staticroot))
-        router.add_handler('/(.*)', HomeHandler(db=db))
+        router.add_handler('/static/favicon.ico', StaticFileHandler(args.staticroot))
+        router.add_handler('/', supplementme.get_routes(db=db))
         return HttpServer(router, debug=True, keep_alive=75)
 
     superviser = Superviser(args)

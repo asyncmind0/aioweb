@@ -8,15 +8,13 @@ class CouchDBAdapterTest(CouchDBTestCase):
         r = self.loop.run_until_complete(self.db.create_db())
         self.test_document = {'test': 'testdata'}
         r = self.loop.run_until_complete(self.db.put(self.test_document))
-        assert r.ok is True
+        assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
         self.test_document['id'] = r.id
 
     def tearDown(self):
         r = self.loop.run_until_complete(
             self.db.delete(self.test_document['id']))
-        assert r.ok is True
-        r = self.loop.run_until_complete(self.db.delete_db())
-        self.assertEqual(r.ok, True)
+        assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
         super(CouchDBAdapterTest, self).tearDown()
 
     def test_info(self):
@@ -26,7 +24,7 @@ class CouchDBAdapterTest(CouchDBTestCase):
     def test_put(self):
         document = {'test': 'testdata'}
         r = self.loop.run_until_complete(self.db.put(document))
-        self.assertEqual(r.ok, True)
+        assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
 
     def test_all(self):
         r = self.loop.run_until_complete(self.db.all())
@@ -43,7 +41,7 @@ class CouchDBAdapterTest(CouchDBTestCase):
         document = {'test': 'testdelete'}
         document = self.loop.run_until_complete(self.db.put(document))
         r = self.loop.run_until_complete(self.db.delete(document.id))
-        assert r.ok is True
+        assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
         r = self.loop.run_until_complete(self.db.get(document.id))
         assert r.reason == 'deleted'
 
@@ -61,15 +59,15 @@ class CouchDBAdapterTest(CouchDBTestCase):
                 }
             }
 
-            r = self.loop.run_until_complete(
-                self.db.put_design_doc('user', document))
-            assert r.ok is True
+        r = self.loop.run_until_complete(
+            self.db.put_design_doc('user', document))
+        assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
 
     def test_view(self):
         self.test_put_design_doc()
         document = {'doc_type': 'User'}
         r1 = self.loop.run_until_complete(self.db.put(document))
-        self.assertEqual(r1.ok, True)
+        assert hasattr(r1, 'ok') and r1.ok is True, "db call failed: %s" % str(r1)
         r = self.loop.run_until_complete(self.db.view("user", "all"))
         assert r.total_rows > 0
         assert r.rows[0]['id'] == r1.id
