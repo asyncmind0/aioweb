@@ -156,8 +156,8 @@ class CouchDBAdapter(DatabaseAdapter):
         data = yield from response.read(decode=True)
         return Bunch(**data)
 
-    def view(self, ddoc, view, **options):
-        viewurl = urljoin(self._dburl, "_design/%s/_view/%s" % (ddoc, view))
+    def view(self, ddoc_name, view, **options):
+        viewurl = urljoin(self._dburl, "_design/%s/_view/%s" % (ddoc_name, view))
         if options:
             query = urlencode(options)
             viewurl = "%s?%s" % (viewurl, query)

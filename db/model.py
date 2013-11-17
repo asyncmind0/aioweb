@@ -35,8 +35,12 @@ class Model(metaclass=ModelMeta):
 
     @classmethod
     def all(cls, db):
+        return cls.view('all', db)
+
+    @classmethod
+    def view(cls, view, db):
         view_name = cls.__name__.lower()
-        n = yield from db.view(view_name, 'all')
+        n = yield from db.view(view_name, view)
         if hasattr(n, 'rows') and n.rows:
             n.rows = [cls(**d['value']) for d in n.rows]
         return n
@@ -55,6 +59,20 @@ class Model(metaclass=ModelMeta):
     def __getattr__(self, name):
         if name in self.required_fields or name in self.fields:
             return self.data[name]
+            
+    def __getitem__(self, name, default=None):
+        return getattr(self, name, default)
+
+    def __setitem__(self, name, value):
+        setattr(self, name, value)
+    
+    @classmethod
+    def get(cls, _id, db):
+        r = yield from db.get(_id)
+        return cls(**r.__dict__)
+        
+    def update(self, value):
+        self.data.update(value)
 
     @classmethod
     def sync_design(cls, db):
@@ -76,3 +94,6 @@ class Model(metaclass=ModelMeta):
         r = yield from db.put_design_doc(view_name, dict(views=_views))
         assert hasattr(r, 'ok') and r.ok == True, \
             "Failed to put design doc: %s" % str(r)
+
+    def __str__(self):
+        return "<%s>%s" % (self.__class__.__name__, self.data)

@@ -45,7 +45,7 @@ class FoodControllerTest (CouchDBTestCase):
     def tearDown(self):
         super(FoodControllerTest, self).tearDown()
 
-    def test_new(self):
+    def test_add_food(self):
         food = Food(name="somefood",
                     nutrients=[['vitamin_c', 10], ['vitamin_d', 20]],
                     serving_size=200,
@@ -53,8 +53,19 @@ class FoodControllerTest (CouchDBTestCase):
         r = self.loop.run_until_complete(food.save(self.db))
         assert hasattr(r, 'ok') and r.ok is True, str(r)
 
+    def test_update_food(self):
+        food = Food(name="somefood",
+                    nutrients=[['vitamin_c', 10], ['vitamin_d', 20]],
+                    serving_size=300,
+                    unit='mg')
+        r = self.loop.run_until_complete(food.save(self.db))
+        assert hasattr(r, 'ok') and r.ok is True, str(r)
+        r = self.loop.run_until_complete(Food.get(r.id,self.db))
+        assert r.name == 'somefood'
+        assert hasattr(r, 'serving_size') and r.serving_size == 300, str(r)
+
     def test_all(self):
-        self.test_new()
+        self.test_add_food()
         r = self.loop.run_until_complete(Food.all(self.db))
         assert hasattr(r, 'rows') and len(r.rows) > 0, str(r)
 
