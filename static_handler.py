@@ -7,9 +7,10 @@ import mimetypes
 
 
 class StaticFileHandler(Handler):
-    def __init__(self, staticroot):
+    def __init__(self, staticroot, baseurl='/'):
         super(StaticFileHandler, self).__init__(write_headers=False)
         self.staticroot = staticroot
+        self.baseurl = baseurl
         
     def __call__(self, request_args=None):
         # path = message.path
@@ -17,8 +18,8 @@ class StaticFileHandler(Handler):
             request_args = request_args[0]
 
         path = self.request.path
-        if path.startswith('/'):
-            path = path[1:]
+        if path.startswith(self.baseurl):
+            path = path[len(self.baseurl):]
 
         if (not path.isprintable() or '/.' in path):
             print('bad path', repr(path))

@@ -29,7 +29,6 @@ class HttpServer(tulip.http.ServerHttpProtocol):
         if handlers:
             for handler in handlers:
                 try:
-                    logging.debug("handler: %s", handler)
                     handler.initialize(self, message, payload,
                                        prev_response=response)
                 except Exception as e:

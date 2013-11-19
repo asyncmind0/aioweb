@@ -5,6 +5,7 @@ import argparse
 import email.message
 import logging
 import os
+from os.path import join, dirname
 import sys
 import imp
 try:
@@ -96,6 +97,7 @@ def main():
         imp.reload(supplementme)
         router = Router()
         router.add_handler('/static/favicon.ico', StaticFileHandler(args.staticroot))
+        router.add_handler('/dojo/', StaticFileHandler(join(dirname(__file__), 'static', 'dojo')))
         router.add_handler('/', supplementme.get_routes(db=db))
         return HttpServer(router, debug=True, keep_alive=75)
 

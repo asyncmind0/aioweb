@@ -5,6 +5,16 @@
         <title>PAGE TITLE</title>
         <!--[if lt IE 9]>
         <script src="/static/js/html5shiv-printshiv.js" media="all"></script><![endif]-->
+        <script  src="dojo/dojo.js"></script>
+        <script type='text/javascript'>
+          var dojoConfig = {
+            async: 1, dojoBlankHtmlUrl: '/blank.html',
+            packages: [ {
+                name: 'supplementme',
+                location: location.pathname.replace(/http:\/[^/]+$/, '') + '/supplementme'
+            } ]};
+          require([ 'supplementme/test' ], function(thinger){ });
+        </script>
         {{#scripts}}
         {{/scripts}}
     </head>

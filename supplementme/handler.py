@@ -16,7 +16,7 @@ class HomeHandler(Handler):
         keys = yield from Nutrient.all(self.db)
         keys = [n.data for n in keys.rows]
         logging.debug("number of nutrients: %s" % len(keys))
-        scripts = [{'src':'test.js'}]
+        scripts = [] #[{'src':'test.js'}]
 
         self.render('home', query=[{'key': key, 'value': value}
                                    for key, value in query.items()],

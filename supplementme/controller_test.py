@@ -23,7 +23,7 @@ class ControllerTest (CouchDBTestCase):
             assert hasattr(r, 'ok') and r.ok is True, str(r)
 
     def test_all(self):
-        self.test_new()
+        self.tes
         r = self.loop.run_until_complete(Nutrient.all(self.db))
         assert len(r.rows) > 0, str(r)
 
