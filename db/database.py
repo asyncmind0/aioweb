@@ -5,6 +5,29 @@ import tulip.http
 from urllib.parse import quote, urlencode
 from urllib.request import urljoin
 from uuid import uuid4
+import inspect
+import logging
+import sys
+
+def catch_db_exception(func):
+    """Decorator to catch exceptions
+
+    """
+    def catch_exception(*args, **kwargs):
+        try:
+            if inspect.isgeneratorfunction(func):
+                coro = func(*args, **kwargs)
+                exc = coro.exception()
+                if exc:
+                    raise exc
+            else:
+                return func(*args, **kwargs)
+        except ConnectionRefusedError as e:
+            logging.error('Could not connect to couchdb')
+            import os,signal
+            os.kill(os.getpid(), signal.SIGTERM)
+            sys.exit(1)
+    return catch_exception
 
 
 class Bunch():

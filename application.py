@@ -98,6 +98,8 @@ def main():
         router = Router()
         router.add_handler('/static/favicon.ico', StaticFileHandler(args.staticroot))
         router.add_handler('/dojo/', StaticFileHandler(join(dirname(__file__), 'static', 'dojo')))
+        router.add_handler('/dijit/', StaticFileHandler(join(dirname(__file__), 'static', 'dojo')))
+        router.add_handler('/jasmine/', StaticFileHandler(join(dirname(__file__), 'static')))
         router.add_handler('/', supplementme.get_routes(db=db))
         return HttpServer(router, debug=True, keep_alive=75)
 

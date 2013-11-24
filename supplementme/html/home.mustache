@@ -5,7 +5,10 @@
         <title>PAGE TITLE</title>
         <!--[if lt IE 9]>
         <script src="/static/js/html5shiv-printshiv.js" media="all"></script><![endif]-->
-        <script  src="dojo/dojo.js"></script>
+        <link href="jasmine/jasmine.css" rel="stylesheet" type="text/css"></link>
+        <script src="jasmine/jasmine.js" type="text/javascript"></script>
+        <script src="jasmine/jasmine-html.js" type="text/javascript"></script>
+        <script src="dojo/dojo.js"></script>
         <script type='text/javascript'>
           var dojoConfig = {
             async: 1, dojoBlankHtmlUrl: '/blank.html',
@@ -15,6 +18,7 @@
             } ]};
           require([ 'supplementme/test' ], function(thinger){ });
         </script>
+        <link href="supplementme/main.css" rel="stylesheet" type="text/css"></link>
         {{#scripts}}
         {{/scripts}}
     </head>
@@ -39,5 +43,6 @@
                 <li>{{key}}:{{value}}</li>
             {{/query}}
         </ol>
+        <div data-dojo-type="supplementme.MealWidget"></div>
     </body>
 </html>

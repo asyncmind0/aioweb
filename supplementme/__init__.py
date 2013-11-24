@@ -8,5 +8,9 @@ def get_routes(db):
         ("/$", HomeHandler(db)),
         ("/(supplementme)/(.*).js", StaticFileHandler(
             join(dirname(__file__), 'js'), baseurl="/supplementme/")),
+        ("/(supplementme)/(.*).html", StaticFileHandler(
+            join(dirname(__file__), 'html'), baseurl="/supplementme/")),
+        ("/(supplementme)/(.*).css", StaticFileHandler(
+            join(dirname(__file__), 'css'), baseurl="/supplementme/")),
         ("/add_food", AddFoodHandler(db)))
     )

@@ -22,18 +22,17 @@ class StaticFileHandler(Handler):
             path = path[len(self.baseurl):]
 
         if (not path.isprintable() or '/.' in path):
-            print('bad path', repr(path))
-            path = None
+            raise tulip.http.HttpStatusException(
+                404, message="Bad path:%s" % path)
         else:
-            path = os.path.join(self.staticroot, path)
-            self.logger.debug("staticroot:%s", os.path.join(self.staticroot, path))
+            filepath = path = os.path.join(self.staticroot, path)
+            #self.logger.debug("staticroot:%s", os.path.join(self.staticroot, path))
             if not os.path.exists(path):
-                path = None
+                raise tulip.http.HttpStatusException(
+                    404, message="Not found:%s" % path)
             else:
                 isdir = os.path.isdir(path)
 
-        if not path:
-            raise tulip.http.HttpStatusException(404)
 
         headers = email.message.Message()
         for hdr, val in self.request.headers:
