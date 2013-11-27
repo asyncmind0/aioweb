@@ -2,11 +2,20 @@ require([
     "dojo/_base/declare",
     "dijit/_WidgetBase", "dijit/_TemplatedMixin",
     "dijit/_WidgetsInTemplateMixin",
+    "dijit/_OnDijitClickMixin",
+    "dojo/store/JsonRest", 
+    "dojo/store/Memory",
+    "dojo/store/Cache",
+    "dojo/store/Observable",
     "dojo/ready", "dojo/parser", "dijit/form/Form",
     "dojo/text!supplementme/foodwidget.html", 
     "dojo/text!supplementme/mealwidget.html", 
 ], function(declare, _WidgetBase,
             _TemplatedMixin, _WidgetsInTemplateMixin,
+            _OnDijitClickMixin,
+            JsonRest,
+            Memory,
+            Observable,
             ready, parser, Form,
             food_template,
             meal_template
@@ -27,14 +36,34 @@ require([
             declare.safeMixin(this, args);
         }
     });
+
     declare("supplementme.FoodWidget",
-            [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
+            [_WidgetBase, _TemplatedMixin, 
+             _WidgetsInTemplateMixin, _OnDijitClickMixin], {
         templateString: food_template,
     });
+
     declare("supplementme.MealWidget",
-            [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
-        templateString: meal_template,
-    });
+            [_WidgetBase, _TemplatedMixin, 
+             _WidgetsInTemplateMixin, _OnDijitClickMixin
+             JsonRest, Memory, Observable
+            ], {
+                 templateString: meal_template,
+                 constructor: function(args){
+                     declare.safeMixin(this, args);
+                     masterStore = new JsonRest({
+                         target: "/meals/"
+                     });
+                     cacheStore = new Memory({ });
+                     this.mealStore = new Cache(masterStore, cacheStore);
+                 },
+                 onSaveMeal: function(e){
+                     console.log('onSaveMeal')
+                 },
+                 onAddMeal: function(e){
+                     console.log('onAddMeal')
+                 }
+             });
     ready(function(){
         parser.parse();
     });

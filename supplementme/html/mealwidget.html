@@ -1,9 +1,18 @@
-<div class='meals-widget'>
+<div class='meals-widget' 
+     dojo-data-type="dijit/form/Form">
   <h2>Meals</h2>
   <h3>Saved Meals</h3>
   <select class='meal-select'>
   </select>
-  <button class='add-meal-button'>Add</button>
+  <button class='add-meal-button' 
+          data-dojo-attach-event="ondijitclick:onAddMeal">
+    Add
+  </button>
+  <input type='text' class='meal-name'/>
+  <button class='save-meal-button' 
+          data-dojo-attach-event="ondijitclick:onSaveMeal">
+    Save
+  </button>
   <div data-dojo-type="supplementme.FoodWidget"></div>
   <ol class='foods-list'>
   </ol>

@@ -27,3 +27,10 @@ class AddFoodHandler(Handler):
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
         self.render(**dict(test='test'))
+
+
+class AddMealHandler(Handler):
+    renderer = JsonRenderer()
+    @tulip.coroutine
+    def __call__(self, request_args=None, **kwargs):
+        self.render(**dict(test='test'))

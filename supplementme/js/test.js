@@ -1,6 +1,9 @@
 console.log("loaded");
 //require([ 'custom/thinger' ], function(thinger){ … });
-require(["dojo/ready","supplementme/test_main"],
+require(["dojo/ready",
+"supplementme/test_main",
+"supplementme/main_test"
+],
         function (ready) {
             ready(function () {
                 // Set up the HTML reporter - this is responsible for
