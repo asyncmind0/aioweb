@@ -23,32 +23,33 @@ class HttpServer(tulip.http.ServerHttpProtocol):
     @tulip.coroutine
     def handle_request(self, message, payload):
         response = None
-        #logging.debug('method = {!r}; path = {!r}; version = {!r}'.format(
+        # logging.debug('method = {!r}; path = {!r}; version = {!r}'.format(
         #    message.method, message.path, message.version))
         handlers, args = self.router.get_handler(message.path)
         if handlers:
             for handler in handlers:
                 try:
-                    handler.initialize(self, message, payload,
-                                       prev_response=response)
+                    yield from handler.initialize(self, message, payload,
+                                                  prev_response=response)
                 except Exception as e:
                     return self.handle_error(500, message, payload, exc=e)
-                    #logging.exception(e)
-                    #response = self.router.handle_error(e)
+                    # logging.exception(e)
+                    # response = self.router.handle_error(e)
                 else:
                     try:
                         response = handler(request_args=args)
                         if (inspect.isgenerator(response) or
-                            isinstance(response, tulip.Future)):
+                                isinstance(response, tulip.Future)):
                             response = yield from response
                         if not isinstance(response, tulip.http.Response):
                             response = handler.response
                     except tulip.http.errors.HttpStatusException as e:
-                        self.logger.debug("%s: %s",e.code, e.message)
+                        self.logger.debug("%s: %s", e.code, e.message)
                         return self.handle_error(e.code, message, payload, exc=e)
                     except Exception as e:
                         return self.handle_error(500, message, payload, exc=e)
-                        #response = handler.handle_error(e, message, request_args=args)
+                        # response = handler.handle_error(e, message,
+                        # request_args=args)
             if not isinstance(response, tulip.http.Response):
                 return self.handle_error(404, message, payload)
         else:

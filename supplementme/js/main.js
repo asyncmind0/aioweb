@@ -15,6 +15,7 @@ require([
             _OnDijitClickMixin,
             JsonRest,
             Memory,
+            Cache,
             Observable,
             ready, parser, Form,
             food_template,
@@ -40,30 +41,34 @@ require([
     declare("supplementme.FoodWidget",
             [_WidgetBase, _TemplatedMixin, 
              _WidgetsInTemplateMixin, _OnDijitClickMixin], {
-        templateString: food_template,
-    });
+                 templateString: food_template,
+             });
 
     declare("supplementme.MealWidget",
             [_WidgetBase, _TemplatedMixin, 
-             _WidgetsInTemplateMixin, _OnDijitClickMixin
-             JsonRest, Memory, Observable
+             _WidgetsInTemplateMixin, _OnDijitClickMixin,
+             JsonRest, Memory, Cache, Observable
             ], {
-                 templateString: meal_template,
-                 constructor: function(args){
-                     declare.safeMixin(this, args);
-                     masterStore = new JsonRest({
-                         target: "/meals/"
-                     });
-                     cacheStore = new Memory({ });
-                     this.mealStore = new Cache(masterStore, cacheStore);
-                 },
-                 onSaveMeal: function(e){
-                     console.log('onSaveMeal')
-                 },
-                 onAddMeal: function(e){
-                     console.log('onAddMeal')
-                 }
-             });
+                templateString: meal_template,
+                constructor: function(args){
+                    declare.safeMixin(this, args);
+                    masterStore = new JsonRest({
+                        target: "/meal/"
+                    });
+                    cacheStore = new Memory({ });
+                    this.mealStore = new Cache(masterStore, cacheStore);
+                    debugger;
+                    this.mealStore.query({'name':'test'});
+                },
+                onSaveMeal: function(e){
+                    console.log('onSaveMeal');
+                    debugger;
+                    var meal = e;
+                },
+                onAddMeal: function(e){
+                    console.log('onAddMeal')
+                }
+            });
     ready(function(){
         parser.parse();
     });

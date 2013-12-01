@@ -2,9 +2,11 @@ import os
 import logging
 from handler import Handler
 from renderers import HtmlRenderer, JsonRenderer
-from .controller import NutrientsController
+from .controller import (
+    NutrientsController, MealController, AuthController)
 from .model import Nutrient
 import tulip
+from tulip.http.protocol import http_payload_parser
 
 
 class HomeHandler(Handler):
@@ -16,21 +18,46 @@ class HomeHandler(Handler):
         keys = yield from Nutrient.all(self.db)
         keys = [n.data for n in keys.rows]
         logging.debug("number of nutrients: %s" % len(keys))
-        scripts = [] #[{'src':'test.js'}]
+        scripts = []  # [{'src':'test.js'}]
 
         self.render('home', query=[{'key': key, 'value': value}
                                    for key, value in query.items()],
                     nutrients=keys, scripts=scripts)
 
+
+class AuthHandler(Handler):
+    renderer = JsonRenderer()
+
+    @tulip.coroutine
+    def __call__(self, request_args=None, **kwargs):
+        controller = AuthController(self.db)
+        form = self.get_form_data(True)
+        session = yield from controller.login(form['username'].pop(), form['password'].pop())
+        self.cookies = dict(userid=session.user._id, sessionid=session.id)
+        self.render(**dict(ok=True))
+
+
 class AddFoodHandler(Handler):
     renderer = JsonRenderer()
+
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
         self.render(**dict(test='test'))
 
 
-class AddMealHandler(Handler):
+class MealHandler(Handler):
     renderer = JsonRenderer()
+
+    @AuthController.authenticated
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
-        self.render(**dict(test='test'))
+        controller = MealController(self.db)
+        result = {}
+        if 'add' in request_args:
+            form = self.get_form_data(True)
+            form['user'] = self.session.user._id
+            result = yield from controller.add_meal(form)
+            result = result.__dict__
+        elif self.query.get('query'):
+            result = yield from controller.search_meals()
+        self.render(**result)

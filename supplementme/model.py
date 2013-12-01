@@ -1,6 +1,26 @@
 from db.model import Model
 
 
+class User(Model):
+    required_fields = ['username', 'password']
+    views = {
+        'by_username': {
+            'map': """
+                function(doc) {
+                    if(doc.doc_type == 'User' && doc.username) {
+                        emit(doc.username, doc);
+                    }
+                }
+            """,
+            'reduce': """
+                function(keys, values){
+                    return true;
+                }
+            """
+        },
+    }
+
+
 class Nutrient(Model):
     required_fields = ['name', 'tag', 'unit', 'number', 'decimal_places']
     views = {
@@ -51,6 +71,22 @@ class Food(Model):
         }
     }
 
-    
-class Serving(Model):
-    required_fields = ['food', 'quantity']
+
+class Meal(Model):
+    required_fields = ['foods', 'quantity', 'user']
+    views = {
+        'by_user': {
+            'map': """
+                function(doc) {
+                    if(doc.doc_type == 'Meal' && doc.user) {
+                        emit(doc.user, null);
+                    }
+                }
+            """,
+            'reduce': """
+                function(keys, values){
+                    return true;
+                }
+            """
+        },
+    }

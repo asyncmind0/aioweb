@@ -1,8 +1,9 @@
 console.log("loaded");
 //require([ 'custom/thinger' ], function(thinger){ … });
-require(["dojo/ready",
-"supplementme/test_main",
-"supplementme/main_test"
+require([
+    "dojo/ready",
+    "supplementme/test_main",
+    "supplementme/main_test"
 ],
         function (ready) {
             ready(function () {

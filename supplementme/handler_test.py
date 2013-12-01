@@ -1,13 +1,21 @@
+from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import unittest
 import unittest.mock
 from test import CouchDBTestCase
-from test import TestCase
-from .handler import HomeHandler, AddFoodHandler
+from test import TestCase, run_test_server
+from .handler import HomeHandler, AddFoodHandler, MealHandler, AuthHandler
+from .controller import UserController
+from .model import Nutrient, Food, User
+from server import HttpServer
+from . import get_routes
+from tulip.http import client
+import json
 
 
 class HomeHandlerTest(CouchDBTestCase):
     def setUp(self):
         super(HomeHandlerTest, self).setUp()
+        self.loop.run_until_complete(Nutrient.sync_design(self.db))
         self.handler = HomeHandler(self.db)
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
@@ -19,10 +27,49 @@ class HomeHandlerTest(CouchDBTestCase):
         r = self.loop.run_until_complete(self.handler())
         assert self.transport.write.called is True, "write Not called"
         assert len(self.transport.write.call_args[0][0]) > 0
-        
-class AddFoodHandlerTest(TestCase):
+
+
+class AuthHandlerTest(CouchDBTestCase):
+    def setUp(self):
+        super(AuthHandlerTest, self).setUp()
+        self.loop.run_until_complete(User.sync_design(self.db))
+        self.auth_handler = AuthHandler(self.db)
+        transport = unittest.mock.Mock()
+        self.auth_handler.response = transport
+        self.test_user = 'testuser'
+        # probably shoudl replace this with actual signup...
+        self.user_controller = UserController(self.db)
+        r = self.loop.run_until_complete(
+            self.user_controller.add_user(
+                dict(username='testuser', password='testpass')))
+        assert hasattr(r, 'ok') and r.ok is True, str(r)
+        self.userid = r.id
+        self.test_pass = 'password'
+        self.cookies = None
+
+    def test_login(self):
+        with run_test_server(self.loop, router=get_routes(self.db)) as httpd:
+            url = httpd.url('auth', 'login')
+            data = dict(username=self.test_user, password=self.test_pass)
+            meth = 'post'
+            r = self.loop.run_until_complete(
+                client.request(meth, url, data=data))
+            content1 = self.loop.run_until_complete(r.read())
+            content = content1.decode()
+            resp = json.loads(content)
+
+            self.assertEqual(r.status, 200)
+            assert 'ok' in resp
+            assert r.cookies['userid'].value
+            assert r.cookies['sessionid'].value
+            self.cookies = r.cookies
+            r.close()
+
+
+class AddFoodHandlerTest(CouchDBTestCase):
     def setUp(self):
         super(AddFoodHandlerTest, self).setUp()
+        self.loop.run_until_complete(Nutrient.sync_design(self.db))
         self.handler = AddFoodHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
@@ -31,4 +78,56 @@ class AddFoodHandlerTest(TestCase):
         r = self.loop.run_until_complete(self.handler())
         assert self.transport.write.called is True, "write Not called"
         assert len(self.transport.write.call_args[0][0]) > 0
+
+
+class MealHandlerTest(AuthHandlerTest):
+    def setUp(self):
+        super(MealHandlerTest, self).setUp()
+        self.loop.run_until_complete(Nutrient.sync_design(self.db))
+        self.handler = AddFoodHandler()
+        self.transport = unittest.mock.Mock()
+        self.handler.response = self.transport
+
+    def test_add_meal(self):
+        self.test_login()
+        with run_test_server(self.loop, router=get_routes(self.db)) as httpd:
+            url = httpd.url('meal', 'add')
+            meth = 'post'
+            food = dict(name="somefood",
+                        nutrients=[['vitamin_c', 10], ['vitamin_d', 20]],
+                        serving_size=300,
+                        unit='mg')
+            meal = dict(foods=[food], quantity='200g')
+            sj_debug() ###############################################################
+            r = self.loop.run_until_complete(
+                client.request(meth, url, data=meal, cookies=self.cookies))
+            content1 = self.loop.run_until_complete(r.read())
+            content2 = self.loop.run_until_complete(r.read())
+            content = content1.decode()
+            resp = json.loads(content)
+
+            self.assertEqual(r.status, 200)
+            assert 'ok' in resp
+            # self.assertIn('"method": "%s"' % meth.upper(), content)
+            self.assertEqual(content1, content2)
+            r.close()
+
+    def test_search_meal(self):
+        self.test_add_meal()
+        with run_test_server(self.loop, router=get_routes(self.db)) as httpd:
+            url = httpd.url('meal')
+            params = (('query', 'name'),)
+            meth = 'get'
+            r = self.loop.run_until_complete(
+                client.request(meth, url, params=params))
+            content1 = self.loop.run_until_complete(r.read())
+            content2 = self.loop.run_until_complete(r.read())
+            content = content1.decode()
+            resp = json.loads(content)
+
+            self.assertEqual(r.status, 200)
+            assert 'ok' in resp
+            # self.assertIn('"method": "%s"' % meth.upper(), content)
+            self.assertEqual(content1, content2)
+            r.close()
 

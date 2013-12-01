@@ -2,7 +2,7 @@ require([
     "dojo/ready",
     "dojo/query",
     "supplementme/main"
-],function (ready, query) {
+], function (ready, query) {
     describe("meal widget", function(){
         it("should be visible",
            function(){

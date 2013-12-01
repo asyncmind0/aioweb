@@ -8,6 +8,8 @@ from uuid import uuid4
 import inspect
 import logging
 import sys
+from .model_codecs import json_dumps, json_loads
+
 
 def catch_db_exception(func):
     """Decorator to catch exceptions
@@ -24,7 +26,8 @@ def catch_db_exception(func):
                 return func(*args, **kwargs)
         except ConnectionRefusedError as e:
             logging.error('Could not connect to couchdb')
-            import os,signal
+            import os
+            import signal
             os.kill(os.getpid(), signal.SIGTERM)
             sys.exit(1)
     return catch_exception
@@ -38,12 +41,21 @@ class Bunch():
         return str(self.__dict__)
 
 
+class ResultList(Bunch):
+    def first(self):
+        return self.__dict__['rows'][0]['value']
+
+    def last(self):
+        return self.__dict__['rows'][-1]['value']
+
+
 class DatabaseAdapter:
     pass
 
 
 class CouchDBAdapter(DatabaseAdapter):
     def __init__(self, url, dbname=None):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self._url = url
         self._dbname = dbname
 
@@ -60,8 +72,8 @@ class CouchDBAdapter(DatabaseAdapter):
             headers={
                 'Accept': 'application/json'
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return Bunch(**json_loads(data))
 
     def create_db(self, dbname=None, **options):
         if not dbname:
@@ -71,8 +83,8 @@ class CouchDBAdapter(DatabaseAdapter):
             headers={
                 'Accept': 'application/json'
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return Bunch(**json_loads(data))
 
     def delete_db(self, dbname=None, **options):
         if not dbname:
@@ -82,8 +94,8 @@ class CouchDBAdapter(DatabaseAdapter):
             headers={
                 'Accept': 'application/json'
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return Bunch(**json_loads(data))
 
     def put(self, document, doc_id=None, **options):
         if not isinstance(document, dict):
@@ -102,12 +114,13 @@ class CouchDBAdapter(DatabaseAdapter):
             doc_id = str(uuid4())
         posturl = urljoin(self._dburl, doc_id)
         response = yield from tulip.http.request(
-            'POST', self._dburl, data=json.dumps(document),
+            'POST', self._dburl, data=json_dumps(document),
             headers={
                 'Accept': 'application/json',
                 'content-type': 'application/json'
             })
-        data = yield from response.read(decode=True)
+        data = yield from response.read()
+        data = json_loads(data)
         if 'ok' in data and data['ok'] is True:
             document['_id'] = data['id']
             document['_rev'] = data['rev']
@@ -119,8 +132,8 @@ class CouchDBAdapter(DatabaseAdapter):
             headers={
                 'Accept': 'application/json'
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return json_loads(data)
 
     def delete(self, doc_id, rev=None, **options):
         if rev == None:
@@ -132,8 +145,8 @@ class CouchDBAdapter(DatabaseAdapter):
             headers={
                 'Accept': 'application/json'
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return Bunch(**json_loads(data))
 
     def all(self, **options):
         response = yield from tulip.http.request(
@@ -141,19 +154,19 @@ class CouchDBAdapter(DatabaseAdapter):
             headers={
                 'Accept': 'application/json'
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return Bunch(**json_loads(data))
 
     def put_design_doc(self, ddoc_name, ddoc, **options):
         posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
         response = yield from tulip.http.request(
-            'PUT', posturl, data=json.dumps(ddoc),
+            'PUT', posturl, data=json_dumps(ddoc),
             headers={
                 'Accept': 'application/json',
                 'content-type': 'application/json'
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return Bunch(**json_loads(data))
 
     def get_design_doc(self, ddoc_name, **options):
         posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
@@ -162,8 +175,8 @@ class CouchDBAdapter(DatabaseAdapter):
             headers={
                 'Accept': 'application/json',
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return Bunch(**json_loads(data))
 
     def delete_design_doc(self, ddoc_name, rev=None, **options):
         if rev == None:
@@ -176,18 +189,27 @@ class CouchDBAdapter(DatabaseAdapter):
             headers={
                 'Accept': 'application/json'
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return Bunch(**json_loads(data))
 
     def view(self, ddoc_name, view, **options):
-        viewurl = urljoin(self._dburl, "_design/%s/_view/%s" % (ddoc_name, view))
-        if options:
-            query = urlencode(options)
-            viewurl = "%s?%s" % (viewurl, query)
+        if not options:
+            options = {}
+        options.setdefault('group', False)
+        options.setdefault('reduce', False)
+        viewurl = urljoin(
+            self._dburl, "_design/%s/_view/%s" % (ddoc_name, view))
+
+        for option in options:
+            options[option] = json.dumps(options[option])
+
+        query = urlencode(options)
+        viewurl = "%s?%s" % (viewurl, query)
+        self.logger.debug('GET: %s', viewurl)
         response = yield from tulip.http.request(
             'GET', viewurl,
             headers={
                 'Accept': 'application/json',
             })
-        data = yield from response.read(decode=True)
-        return Bunch(**data)
+        data = yield from response.read()
+        return ResultList(**json_loads(data))

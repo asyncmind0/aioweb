@@ -1,4 +1,9 @@
+from debug import pprint, shell, profile, debug as sj_debug
+
+
 class ModelMeta(type):
+    REGISTRY = {}
+
     def __new__(cls, name, bases, attrs):
         default_views = {
             'all': {
@@ -11,7 +16,12 @@ class ModelMeta(type):
             }
         }
         attrs['default_views'] = default_views
-        return type.__new__(cls, name, bases, attrs)
+        model_cls = type.__new__(cls, name, bases, attrs)
+        cls.REGISTRY[name] = model_cls
+        return model_cls
+
+    def get_model_by_name(cls, name):
+        return cls.REGISTRY[name]
 
 
 class Model(metaclass=ModelMeta):
@@ -38,11 +48,9 @@ class Model(metaclass=ModelMeta):
         return cls.view('all', db)
 
     @classmethod
-    def view(cls, view, db):
+    def view(cls, view, db, **kwargs):
         view_name = cls.__name__.lower()
-        n = yield from db.view(view_name, view)
-        if hasattr(n, 'rows') and n.rows:
-            n.rows = [cls(**d['value']) for d in n.rows]
+        n = yield from db.view(view_name, view, **kwargs)
         return n
 
     @property
@@ -55,22 +63,24 @@ class Model(metaclass=ModelMeta):
     def __setattr__(self, name, value):
         if name in self.required_fields or name in self.fields:
             self.data[name] = value
+        raise AttributeError('Trying to set unknown field: %s' % name)
 
     def __getattr__(self, name):
         if name in self.required_fields or name in self.fields:
             return self.data[name]
-            
+        return getattr(super(Model, self), name)
+
     def __getitem__(self, name, default=None):
         return getattr(self, name, default)
 
     def __setitem__(self, name, value):
         setattr(self, name, value)
-    
+
     @classmethod
     def get(cls, _id, db):
         r = yield from db.get(_id)
-        return cls(**r.__dict__)
-        
+        return r
+
     def update(self, value):
         self.data.update(value)
 
