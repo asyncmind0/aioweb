@@ -42,11 +42,21 @@ class Bunch():
 
 
 class ResultList(Bunch):
+    def __iter__(self):
+        for row in self.__dict__['rows']:
+            yield row['value']
+
     def first(self):
-        return self.__dict__['rows'][0]['value']
+        if 'total_rows' in self.__dict__ and \
+           self.__dict__['total_rows'] > 0:
+            return self.__dict__['rows'][0]['value']
+        return None
 
     def last(self):
-        return self.__dict__['rows'][-1]['value']
+        if 'total_rows' in self.__dict__ and \
+           self.__dict__['total_rows'] > 0:
+            return self.__dict__['rows'][-1]['value']
+        return None
 
 
 class DatabaseAdapter:

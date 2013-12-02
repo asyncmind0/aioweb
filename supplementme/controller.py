@@ -1,28 +1,10 @@
-from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import tulip
 from controller import Controller
-from .model import Food, Nutrient, Meal, User
+from .model import Food, Nutrient, Meal
+from auth import User
 import http.cookies
 from uuid import uuid4
-
-
-class Session:
-    ACTIVE_SESSIONS = {}
-
-    def __init__(self, user):
-        self.user = user
-        self.id = str(uuid4())
-
-    @classmethod
-    def get_session(cls, userid, sessionid):
-        session = cls.ACTIVE_SESSIONS.get((userid, sessionid))
-        return session
-
-    @classmethod
-    def start_session(cls, user):
-        session = Session(user)
-        return Session.ACTIVE_SESSIONS.setdefault(
-            (user._id, session.id), session)
+from session import Session
 
 
 class NutrientsController(Controller):
@@ -77,8 +59,8 @@ class MealController(Controller):
         return save
 
     @tulip.coroutine
-    def search_meals(self, user):
-        meals = yield from Meal.view('by_user', self.db, key=user)
+    def search_meals(self):
+        meals = yield from Meal.view('by_user', self.db, key=self.session.user._id)
         return meals
 
 
@@ -88,26 +70,3 @@ class UserController(Controller):
         user = User(**user)
         save = yield from user.save(self.db)
         return save
-
-
-class AuthController(Controller):
-    @tulip.coroutine
-    def login(self, username, password):
-        print(username)
-        user = yield from User.view('by_username', self.db, key=username)
-        user = user.first()
-        return Session.start_session(user)
-
-    @classmethod
-    def authenticated(cls, method):
-        def _check_auth(self, request_args=None, **kwargs):
-            sj_debug()
-            sessionid = self.cookies.get('sessionid')
-            userid = self.cookies.get('userid')
-            if sessionid and userid:
-                session = Session.get_session(userid.value, sessionid.value)
-                self.session = session
-            else:
-                raise Exception('No session')
-            yield from method(self, request_args=request_args, **kwargs)
-        return _check_auth

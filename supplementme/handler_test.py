@@ -1,12 +1,11 @@
-from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import unittest
 import unittest.mock
 from test import CouchDBTestCase
 from test import TestCase, run_test_server
 from .handler import HomeHandler, AddFoodHandler, MealHandler, AuthHandler
 from .controller import UserController
-from .model import Nutrient, Food, User
-from server import HttpServer
+from .model import Nutrient, Food, Meal
+from auth import User
 from . import get_routes
 from tulip.http import client
 import json
@@ -84,6 +83,7 @@ class MealHandlerTest(AuthHandlerTest):
     def setUp(self):
         super(MealHandlerTest, self).setUp()
         self.loop.run_until_complete(Nutrient.sync_design(self.db))
+        self.loop.run_until_complete(Meal.sync_design(self.db))
         self.handler = AddFoodHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
@@ -98,18 +98,14 @@ class MealHandlerTest(AuthHandlerTest):
                         serving_size=300,
                         unit='mg')
             meal = dict(foods=[food], quantity='200g')
-            sj_debug() ###############################################################
             r = self.loop.run_until_complete(
                 client.request(meth, url, data=meal, cookies=self.cookies))
             content1 = self.loop.run_until_complete(r.read())
-            content2 = self.loop.run_until_complete(r.read())
             content = content1.decode()
             resp = json.loads(content)
 
             self.assertEqual(r.status, 200)
-            assert 'ok' in resp
-            # self.assertIn('"method": "%s"' % meth.upper(), content)
-            self.assertEqual(content1, content2)
+            assert 'ok' in resp, resp
             r.close()
 
     def test_search_meal(self):
@@ -119,15 +115,17 @@ class MealHandlerTest(AuthHandlerTest):
             params = (('query', 'name'),)
             meth = 'get'
             r = self.loop.run_until_complete(
-                client.request(meth, url, params=params))
+                client.request(meth, url, params=params, cookies=self.cookies))
             content1 = self.loop.run_until_complete(r.read())
-            content2 = self.loop.run_until_complete(r.read())
             content = content1.decode()
             resp = json.loads(content)
 
             self.assertEqual(r.status, 200)
-            assert 'ok' in resp
-            # self.assertIn('"method": "%s"' % meth.upper(), content)
-            self.assertEqual(content1, content2)
+            assert 'data' in resp, resp
+            assert isinstance(resp['data'], list), resp['data']
+            import pdb;pdb.set_trace()
+            assert len(resp['data']) > 0, resp['data']
+            for meal in resp['data']:
+                assert 'foods' in meal, meal
             r.close()
 

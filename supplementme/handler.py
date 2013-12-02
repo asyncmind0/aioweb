@@ -3,10 +3,11 @@ import logging
 from handler import Handler
 from renderers import HtmlRenderer, JsonRenderer
 from .controller import (
-    NutrientsController, MealController, AuthController)
+    NutrientsController, MealController)
 from .model import Nutrient
 import tulip
 from tulip.http.protocol import http_payload_parser
+from auth import AuthController, authenticated
 
 
 class HomeHandler(Handler):
@@ -48,10 +49,10 @@ class AddFoodHandler(Handler):
 class MealHandler(Handler):
     renderer = JsonRenderer()
 
-    @AuthController.authenticated
+    @authenticated
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
-        controller = MealController(self.db)
+        controller = MealController(self.db, session=self.session)
         result = {}
         if 'add' in request_args:
             form = self.get_form_data(True)
@@ -60,4 +61,5 @@ class MealHandler(Handler):
             result = result.__dict__
         elif self.query.get('query'):
             result = yield from controller.search_meals()
+            result = dict(data=[meal for meal in result])
         self.render(**result)

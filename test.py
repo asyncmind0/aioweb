@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import unittest
 import unittest.mock
 import gc
@@ -11,10 +13,12 @@ import contextlib
 import threading
 from server import HttpServer as AppServer
 import urllib.parse
+from debug import set_except_hook
 
 
 class TestCase(unittest.TestCase):
     def setUp(self):
+        set_except_hook()
         logging.getLogger('tulip').level = logging.ERROR
         self.loop = tulip.new_event_loop()
         tulip.set_event_loop(self.loop)
@@ -115,3 +119,8 @@ def run_test_server(loop, *, host='127.0.0.1', port=0,
     finally:
         thread_loop.call_soon_threadsafe(waiter.set_result, None)
         server_thread.join()
+
+def __main__():
+    import nose
+    sj_debug() ###############################################################
+    nose.run(argv=sys.argv+['-s'])

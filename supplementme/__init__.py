@@ -15,6 +15,6 @@ def get_routes(db):
         ("/(supplementme)/(.*).css", StaticFileHandler(
             join(dirname(__file__), 'css'), baseurl="/supplementme/")),
         ("/auth/login$", AuthHandler(db)),
-        ("/meal/(.*)$", MealHandler(db)),
+        ("/meal/{0,1}(.*)$", MealHandler(db)),
         ("/add_food", AddFoodHandler(db)))
     )

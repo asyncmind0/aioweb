@@ -1,9 +1,9 @@
-from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 from test import CouchDBTestCase
 from .controller import (
     NutrientsController, FoodController, MealController,
-    UserController, AuthController)
-from .model import Nutrient, Food, Meal, User
+    UserController)
+from .model import Nutrient, Food, Meal
+from auth import User, AuthController
 
 
 class ControllerTest (CouchDBTestCase):
@@ -108,7 +108,7 @@ class MealControllerTest (CouchDBTestCase):
     def test_search_meal(self):
         self.test_add_meal()
         r = self.loop.run_until_complete(
-            self.controller.search_meals(user=self.userid))
+            self.controller.search_meals())
         assert hasattr(r, 'total_rows') and r.total_rows > 0, str(r)
 
 
@@ -132,4 +132,3 @@ class AuthControllerTest (CouchDBTestCase):
     def test_login(self):
         r = self.loop.run_until_complete(
             self.auth_controller.login(self.test_user, self.test_pass))
-        sj_debug() ###############################################################

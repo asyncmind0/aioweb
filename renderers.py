@@ -1,4 +1,5 @@
 import json
+from db.model_codecs import json_dumps
 import pystache
 
 
@@ -35,6 +36,7 @@ class HtmlRenderer(object):
         renderer = pystache.Renderer(search_dirs=self.template_dirs)
         return renderer.render_name(template_name, *args, **kwargs).encode()
 
+
 class JsonRenderer():
     def render(self, **kwargs):
-        return json.dumps(kwargs).encode()
+        return json_dumps(kwargs).encode()

@@ -27,9 +27,7 @@ class Handler(ErrorHandlerMixin):
         self.request = message
         self.body = yield from payload.read()
         self.headers = dict(self.request.headers)
-        self._cookie = self.headers.get('COOKIE')
-        if self._cookie:
-            self._cookie = http.cookies.SimpleCookie(self._cookie)
+        self._cookie = http.cookies.SimpleCookie(self.headers.get('COOKIE'))
         self.prev_response = prev_response
         if self.write_headers:
             self.response = self._write_headers()

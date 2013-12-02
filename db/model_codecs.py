@@ -4,7 +4,7 @@ import logging
 
 class ModelEncoder(JSONEncoder):
     def default(self, o):
-        return o.__dict__
+        return o.data
         
 class ModelDecoder(JSONDecoder):
     def __init__(self):
