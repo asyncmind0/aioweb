@@ -58,6 +58,9 @@ class ResultList(Bunch):
             return self.__dict__['rows'][-1]['value']
         return None
 
+        
+class CouchDBError(Exception):
+    pass
 
 class DatabaseAdapter:
     pass
@@ -205,8 +208,8 @@ class CouchDBAdapter(DatabaseAdapter):
     def view(self, ddoc_name, view, **options):
         if not options:
             options = {}
-        options.setdefault('group', False)
-        options.setdefault('reduce', False)
+        
+        options.setdefault('reduce', options.setdefault('group', False))
         viewurl = urljoin(
             self._dburl, "_design/%s/_view/%s" % (ddoc_name, view))
 
@@ -222,4 +225,9 @@ class CouchDBAdapter(DatabaseAdapter):
                 'Accept': 'application/json',
             })
         data = yield from response.read()
-        return ResultList(**json_loads(data))
+        return ResultList(**self.check_errors(json_loads(data)))
+
+    def check_errors(self, data):
+        if 'error' in data:
+            raise CouchDBError(data['reason'])
+        return data

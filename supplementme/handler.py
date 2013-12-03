@@ -33,7 +33,8 @@ class AuthHandler(Handler):
     def __call__(self, request_args=None, **kwargs):
         controller = AuthController(self.db)
         form = self.get_form_data(True)
-        session = yield from controller.login(form['username'].pop(), form['password'].pop())
+        session = yield from controller.login(
+            form['username'].pop(), form['password'].pop())
         self.cookies = dict(userid=session.user._id, sessionid=session.id)
         self.render(**dict(ok=True))
 
@@ -52,14 +53,20 @@ class MealHandler(Handler):
     @authenticated
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
-        controller = MealController(self.db, session=self.session)
+        self.controller = MealController(self.db, session=self.session)
         result = {}
         if 'add' in request_args:
-            form = self.get_form_data(True)
-            form['user'] = self.session.user._id
-            result = yield from controller.add_meal(form)
-            result = result.__dict__
+            result = yield from self.add_meal()
         elif self.query.get('query'):
-            result = yield from controller.search_meals()
-            result = dict(data=[meal for meal in result])
+            result = yield from self.query_meals()
         self.render(**result)
+
+    def add_meal(self):
+        form = self.get_form_data(True)
+        form['user'] = self.session.user._id
+        result = yield from self.controller.add_meal(form)
+        return result.__dict__
+
+    def query_meals(self):
+        result = yield from self.controller.search_meals()
+        return dict(data=[meal for meal in result])

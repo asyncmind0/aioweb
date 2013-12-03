@@ -123,7 +123,6 @@ class MealHandlerTest(AuthHandlerTest):
             self.assertEqual(r.status, 200)
             assert 'data' in resp, resp
             assert isinstance(resp['data'], list), resp['data']
-            import pdb;pdb.set_trace()
             assert len(resp['data']) > 0, resp['data']
             for meal in resp['data']:
                 assert 'foods' in meal, meal

@@ -4,6 +4,7 @@ from .controller import (
     UserController)
 from .model import Nutrient, Food, Meal
 from auth import User, AuthController
+from session import Session
 
 
 class ControllerTest (CouchDBTestCase):
@@ -38,16 +39,37 @@ class ControllerTest (CouchDBTestCase):
         test_names = [n.name for n in self.test_nutrients]
         self.assertListEqual(sorted(r), sorted(test_names)), str(r)
 
-
-class FoodControllerTest (CouchDBTestCase):
+class AuthControllerTest (CouchDBTestCase):
     def setUp(self):
-        super(FoodControllerTest, self).setUp()
+        super(AuthControllerTest, self).setUp()
         self.loop.run_until_complete(Nutrient.sync_design(self.db))
         self.loop.run_until_complete(Food.sync_design(self.db))
-        self.controller = FoodController(self.db)
+        self.loop.run_until_complete(Meal.sync_design(self.db))
+        self.loop.run_until_complete(User.sync_design(self.db))
+        self.user_controller = UserController(self.db)
+        self.auth_controller = AuthController(self.db)
+        self.test_user = 'testuser'
+        r = self.loop.run_until_complete(
+            self.user_controller.add_user(
+                dict(username='testuser', password='testpass')))
+        assert hasattr(r, 'ok') and r.ok is True, str(r)
+        self.userid = r.id
+        self.test_pass = 'password'
 
-    def tearDown(self):
-        super(FoodControllerTest, self).tearDown()
+    def test_login(self):
+        r = self.loop.run_until_complete(
+            self.auth_controller.login(self.test_user, self.test_pass))
+        assert isinstance(r, Session), r
+        assert isinstance(r.user, User), r.user
+        assert isinstance(r.id, str)
+        self.session = r
+
+
+class FoodControllerTest (AuthController):
+    def setUp(self):
+        super(FoodControllerTest, self).setUp()
+        self.controller = FoodController(self.db)
+        self.test_login()
 
     def test_add_food(self):
         food = Food(name="somefood",
@@ -77,31 +99,20 @@ class FoodControllerTest (CouchDBTestCase):
         pass
 
 
-class MealControllerTest (CouchDBTestCase):
+class MealControllerTest (AuthController):
     def setUp(self):
         super(MealControllerTest, self).setUp()
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.loop.run_until_complete(Food.sync_design(self.db))
-        self.loop.run_until_complete(Meal.sync_design(self.db))
-        self.loop.run_until_complete(User.sync_design(self.db))
-        self.controller = MealController(self.db)
-        user_controller = UserController(self.db)
-        self.test_user = 'testuser'
-        r = self.loop.run_until_complete(
-            user_controller.add_user(
-                dict(username='testuser', password='testpass')))
-        assert hasattr(r, 'ok') and r.ok is True, str(r)
-        self.userid = r.id
+        self.test_login()
 
-    def tearDown(self):
-        super(MealControllerTest, self).tearDown()
 
     def test_add_meal(self):
-        food = dict(name="somefood",
+        food = Food(name="somefood",
                     nutrients=[['vitamin_c', 10], ['vitamin_d', 20]],
                     serving_size=300,
                     unit='mg')
-        meal = dict(foods=[food], quantity='200g', user=self.userid)
+        r = self.loop.run_until_complete(food.save(self.db))
+        assert hasattr(r, 'ok') and r.ok is True, str(r)
+        meal = dict(foods=[food._id], quantity='200g', user=self.userid)
         r = self.loop.run_until_complete(self.controller.add_meal(meal))
         assert hasattr(r, 'ok') and r.ok is True, str(r)
 
@@ -112,23 +123,3 @@ class MealControllerTest (CouchDBTestCase):
         assert hasattr(r, 'total_rows') and r.total_rows > 0, str(r)
 
 
-class AuthControllerTest (CouchDBTestCase):
-    def setUp(self):
-        super(AuthControllerTest, self).setUp()
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.loop.run_until_complete(Food.sync_design(self.db))
-        self.loop.run_until_complete(Meal.sync_design(self.db))
-        self.loop.run_until_complete(User.sync_design(self.db))
-        self.user_controller = UserController(self.db)
-        self.auth_controller = AuthController(self.db)
-        self.test_user = 'testuser'
-        r = self.loop.run_until_complete(
-            self.user_controller.add_user(
-                dict(username='testuser', password='testpass')))
-        assert hasattr(r, 'ok') and r.ok is True, str(r)
-        self.userid = r.id
-        self.test_pass = 'password'
-
-    def test_login(self):
-        r = self.loop.run_until_complete(
-            self.auth_controller.login(self.test_user, self.test_pass))

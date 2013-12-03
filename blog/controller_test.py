@@ -16,10 +16,6 @@ class ControllerTest(CouchDBTestCase):
         self.assertEqual(r.ok, True)
         super(CouchDBTestCase, self).tearDown()
 
-    def test_all(self):
-        r = self.loop.run_until_complete(HomeController.all(self.db))
-        assert len(r.rows) > 0
-
     def test_new_post(self):
         post = Post(date=str(datetime.now()),
                     body=generate_paragraph()[2],

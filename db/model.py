@@ -41,6 +41,8 @@ class Model(metaclass=ModelMeta):
 
     def save(self, db):
         r = yield from db.put(self.data)
+        if 'id' in r.__dict__ and not self._id:
+            self._id = r.id
         return r
 
     @classmethod
@@ -61,9 +63,11 @@ class Model(metaclass=ModelMeta):
         return self.data
 
     def __setattr__(self, name, value):
-        if name in self.required_fields or name in self.fields:
+        if name in self.required_fields or name in self.fields \
+           or name in self._couchdb_fields:
             self.data[name] = value
-        raise AttributeError('Trying to set unknown field: %s' % name)
+        else:
+            raise AttributeError('Trying to set unknown field: %s' % name)
 
     def __getattr__(self, name):
         if name in self.required_fields or name in self.fields:

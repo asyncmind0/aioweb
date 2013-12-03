@@ -35,7 +35,7 @@ class CouchDBAdapterTest(CouchDBTestCase):
         assert r.total_rows > 0
         one = r.rows[0]
         r = self.loop.run_until_complete(self.db.get(one['id']))
-        assert r._id == one['id']
+        assert r['_id'] == one['id']
 
     def test_delete(self):
         document = {'test': 'testdelete'}
@@ -43,7 +43,7 @@ class CouchDBAdapterTest(CouchDBTestCase):
         r = self.loop.run_until_complete(self.db.delete(document.id))
         assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
         r = self.loop.run_until_complete(self.db.get(document.id))
-        assert r.reason == 'deleted'
+        assert r['reason'] == 'deleted', r
 
     def test_put_design_doc(self):
         document = {

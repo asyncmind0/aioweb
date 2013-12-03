@@ -18,9 +18,7 @@ class NutrientsController(Controller):
 
     def keys(self):
         n = yield from self.db.view('nutrient', 'keys', group=True)
-        if n and hasattr(n, 'rows'):
-            return [d['key'] for d in n.rows]
-        return []
+        return [d['key'] for d in n.rows]
 
 
 class FoodController(Controller):

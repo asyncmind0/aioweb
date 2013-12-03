@@ -14,6 +14,7 @@ import threading
 from server import HttpServer as AppServer
 import urllib.parse
 from debug import set_except_hook
+from nose.tools import nottest
 
 
 class TestCase(unittest.TestCase):
@@ -45,7 +46,7 @@ class CouchDBTestCase(TestCase):
         assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
         super(CouchDBTestCase, self).tearDown()
 
-        
+@nottest        
 @contextlib.contextmanager
 def run_test_server(loop, *, host='127.0.0.1', port=0,
                     use_ssl=False, router=None):

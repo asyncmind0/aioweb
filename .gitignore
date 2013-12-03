@@ -2,3 +2,4 @@ tulip/
 cscope.*
 tmp/
 __pycache__/
+*.pyc
