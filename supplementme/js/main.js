@@ -40,29 +40,50 @@ require([
 
     declare("supplementme.FoodWidget",
             [_WidgetBase, _TemplatedMixin, 
-             _WidgetsInTemplateMixin, _OnDijitClickMixin], {
-                 templateString: food_template,
-             });
+             _WidgetsInTemplateMixin, _OnDijitClickMixin,
+             JsonRest, Memory, Cache, Observable
+            ], {
+                templateString: food_template,
+                constructor: function(args){
+                    declare.safeMixin(this, args);
+                    var masterStore = new JsonRest({
+                        target: "/food/"
+                    });
+                    var cacheStore = new Memory({ });
+                    this.foodStore = new Cache(masterStore, cacheStore);
+                    //this.foodStore.query({'name':'test'});
+                    var nutrienStore = new JsonRest({
+                        target: "/nutrients/"
+                    });
+                    this.nutrientStore = new Cache(nutrientStore, new Memory({}));
+                },
+                onSaveFood: function(e){
+                    console.log('onSaveFood');
+                    var food = e;
+                },
+                onAddFood: function(e){
+                    console.log('onAddFood')
+                    food =
+                }
+            });
 
     declare("supplementme.MealWidget",
             [_WidgetBase, _TemplatedMixin, 
              _WidgetsInTemplateMixin, _OnDijitClickMixin,
-             JsonRest, Memory, Cache, Observable
+             JsonRest, Memory, Cache, Observable, supplementme.FoodWidget
             ], {
                 templateString: meal_template,
                 constructor: function(args){
                     declare.safeMixin(this, args);
-                    masterStore = new JsonRest({
+                    var masterStore = new JsonRest({
                         target: "/meal/"
                     });
-                    cacheStore = new Memory({ });
+                    var cacheStore = new Memory({ });
                     this.mealStore = new Cache(masterStore, cacheStore);
-                    debugger;
-                    this.mealStore.query({'name':'test'});
+                    //this.mealStore.query({'name':'test'});
                 },
                 onSaveMeal: function(e){
                     console.log('onSaveMeal');
-                    debugger;
                     var meal = e;
                 },
                 onAddMeal: function(e){

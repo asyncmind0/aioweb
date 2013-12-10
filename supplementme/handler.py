@@ -17,7 +17,7 @@ class HomeHandler(Handler):
         controller = NutrientsController(self.db)
         query = self.query
         keys = yield from Nutrient.all(self.db)
-        keys = [n.data for n in keys.rows]
+        keys = [n for n in keys.rows]
         logging.debug("number of nutrients: %s" % len(keys))
         scripts = []  # [{'src':'test.js'}]
 
@@ -39,7 +39,7 @@ class AuthHandler(Handler):
         self.render(**dict(ok=True))
 
 
-class AddFoodHandler(Handler):
+class FoodHandler(Handler):
     renderer = JsonRenderer()
 
     @tulip.coroutine
@@ -70,3 +70,14 @@ class MealHandler(Handler):
     def query_meals(self):
         result = yield from self.controller.search_meals()
         return dict(data=[meal for meal in result])
+
+
+class NutrientHandler(Handler):
+    renderer = JsonRenderer()
+
+    @authenticated
+    @tulip.coroutine
+    def __call__(self, request_args=None, **kwargs):
+        self.controller = NutrientsController(self.db, session=self.session)
+        result = yield from self.controller.keys()
+        self.render(nutrients=result)

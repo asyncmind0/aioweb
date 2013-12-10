@@ -8,15 +8,23 @@
         <link href="jasmine/jasmine.css" rel="stylesheet" type="text/css"></link>
         <script src="jasmine/jasmine.js" type="text/javascript"></script>
         <script src="jasmine/jasmine-html.js" type="text/javascript"></script>
+        <script src="jasmine/console.js" type="text/javascript"></script>
+        <script src="jasmine/boot.js" type="text/javascript"></script>
         <script src="dojo/dojo.js"></script>
         <script type='text/javascript'>
           var dojoConfig = {
-            async: 1, dojoBlankHtmlUrl: '/blank.html',
-            packages: [ {
-                name: 'supplementme',
-                location: location.pathname.replace(/http:\/[^/]+$/, '') + '/supplementme'
+             async: true, 
+             dojoBlankHtmlUrl: '/blank.html',
+             packages: [ {
+                 name: 'supplementme',
+                 location: location.pathname.replace(/http:\/[^/]+$/, '') + '/supplementme'
             } ]};
-          require([ 'supplementme/test' ], function(thinger){ });
+          require([ 'supplementme/test' ], function(thinger){
+                         /*getJasmineRequireObj().console(jasmineRequire, window.jasmine);
+                         var options={};
+                         options.print = function(msg){console.log(msg)};
+                         window.jasmine.getEnv().addReporter(new window.jasmine.ConsoleReporter(options));*/
+});
         </script>
         <link href="supplementme/main.css" rel="stylesheet" type="text/css"></link>
         {{#scripts}}

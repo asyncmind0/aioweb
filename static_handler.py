@@ -4,6 +4,25 @@ import tulip.http
 import email.message
 from handler import Handler
 import mimetypes
+from router import Router
+from config import config
+from os.path import join, dirname
+
+
+def get_routes(router=None):
+    if not router:
+        router = Router()
+    router.add_handler(
+        '/static/favicon.ico', StaticFileHandler(config['default']['staticroot']))
+    router.add_handler('/dojo/', StaticFileHandler(
+        join(dirname(__file__), 'static', 'dojo')))
+    router.add_handler('/dijit/', StaticFileHandler(
+        join(dirname(__file__), 'static', 'dojo')))
+    router.add_handler(
+        '/jasmine/', StaticFileHandler(join(dirname(__file__), 'static', 
+                                            config['default']['jasmine']),
+                                       baseurl='/jasmine/'))
+    return router
 
 
 class StaticFileHandler(Handler):
@@ -11,7 +30,7 @@ class StaticFileHandler(Handler):
         super(StaticFileHandler, self).__init__(write_headers=False)
         self.staticroot = staticroot
         self.baseurl = baseurl
-        
+
     def __call__(self, request_args=None):
         # path = message.path
         if request_args:
@@ -26,13 +45,13 @@ class StaticFileHandler(Handler):
                 404, message="Bad path:%s" % path)
         else:
             filepath = path = os.path.join(self.staticroot, path)
-            #self.logger.debug("staticroot:%s", os.path.join(self.staticroot, path))
+            # self.logger.debug("staticroot:%s", os.path.join(self.staticroot,
+            # path))
             if not os.path.exists(path):
                 raise tulip.http.HttpStatusException(
                     404, message="Not found:%s" % path)
             else:
                 isdir = os.path.isdir(path)
-
 
         headers = email.message.Message()
         for hdr, val in self.request.headers:

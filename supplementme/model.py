@@ -17,7 +17,22 @@ class Nutrient(Model):
                     return true;
                 }
             """
+        },
+        'by_tag': {
+            'map': """
+                function(doc) {
+                    if(doc.doc_type == 'Nutrient' && doc.tag) {
+                        emit(doc.tag, null);
+                    }
+                }
+            """,
+            'reduce': """
+                function(keys, values){
+                    return true;
+                }
+            """
         }
+
     }
 
 

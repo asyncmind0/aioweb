@@ -20,6 +20,13 @@ class NutrientsController(Controller):
         n = yield from self.db.view('nutrient', 'keys', group=True)
         return [d['key'] for d in n.rows]
 
+    def validate_nutrients(self, nutrient_tags):
+        validated = yield from Nutrient.view(
+            'by_tag', self.db, keys=nutrient_tags)
+        assert len(validated.rows) == len(nutrient_tags) \
+            and set(nutrient_tags) == set([n['key'] for n in validated.rows]),\
+            "Invalid Nutrients"
+
 
 class FoodController(Controller):
     def get_foods(self, name):
@@ -27,21 +34,25 @@ class FoodController(Controller):
         assert hasattr(r, 'rows') and len(r.rows) > 0, str(r)
         return r.rows
 
-    def add_update_food(self, name, value):
-        assert isinstance(value, Food), "Invalid value"
+    def add_update_food(self, value):
+        assert isinstance(value, dict), "Invalid value"
+        name = value['name']
+        food = Food(**value)
+        nutrient_controller = NutrientsController(self.db)
+        yield from nutrient_controller.validate_nutrients(
+            [n['tag'] for n in food.nutrients])
         old_food = None
-        if '_id' in food and food._id:
+        if food._id:
             old_food = yield from Food.get(_id)
         else:
             old_food = yield from Food.view('by_name', self.db)
-            old_food = old_food[0]
+            old_food = old_food.first()
         if old_food:
             old_food.update(food)
             food = old_food
 
         r = yield from food.save(self.db)
-        assert hasattr(
-            r, 'ok') and r.ok is True, "Failed to add food: %s" % str(r)
+        return r
 
 
 class MealController(Controller):

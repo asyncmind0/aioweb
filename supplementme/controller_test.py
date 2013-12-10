@@ -5,6 +5,7 @@ from .controller import (
 from .model import Nutrient, Food, Meal
 from auth import User, AuthController
 from session import Session
+from .importer import import_sr25_nutr_def
 
 
 class ControllerTest (CouchDBTestCase):
@@ -39,6 +40,7 @@ class ControllerTest (CouchDBTestCase):
         test_names = [n.name for n in self.test_nutrients]
         self.assertListEqual(sorted(r), sorted(test_names)), str(r)
 
+
 class AuthControllerTest (CouchDBTestCase):
     def setUp(self):
         super(AuthControllerTest, self).setUp()
@@ -65,26 +67,30 @@ class AuthControllerTest (CouchDBTestCase):
         self.session = r
 
 
-class FoodControllerTest (AuthController):
+class FoodControllerTest (AuthControllerTest):
     def setUp(self):
         super(FoodControllerTest, self).setUp()
         self.controller = FoodController(self.db)
+        import_sr25_nutr_def(self.db, self.loop)
         self.test_login()
 
     def test_add_food(self):
-        food = Food(name="somefood",
-                    nutrients=[['vitamin_c', 10], ['vitamin_d', 20]],
+        food = dict(name="somefood",
+                    nutrients=[dict(tag='CAFFN', quantity=10),
+                               dict(tag='BETN', quantity=20)],
                     serving_size=200,
                     unit='mg')
         r = self.loop.run_until_complete(food.save(self.db))
         assert hasattr(r, 'ok') and r.ok is True, str(r)
 
     def test_update_food(self):
-        food = Food(name="somefood",
-                    nutrients=[['vitamin_c', 10], ['vitamin_d', 20]],
+        food = dict(name="somefood",
+                    nutrients=[dict(tag='ALC', quantity=10),
+                               dict(tag='ASH', quantity=20)],
                     serving_size=300,
                     unit='mg')
-        r = self.loop.run_until_complete(food.save(self.db))
+        r = self.loop.run_until_complete(
+            self.controller.add_update_food(food))
         assert hasattr(r, 'ok') and r.ok is True, str(r)
         r = self.loop.run_until_complete(Food.get(r.id, self.db))
         assert r.name == 'somefood'
@@ -99,11 +105,10 @@ class FoodControllerTest (AuthController):
         pass
 
 
-class MealControllerTest (AuthController):
+class MealControllerTest (AuthControllerTest):
     def setUp(self):
         super(MealControllerTest, self).setUp()
         self.test_login()
-
 
     def test_add_meal(self):
         food = Food(name="somefood",
@@ -123,3 +128,14 @@ class MealControllerTest (AuthController):
         assert hasattr(r, 'total_rows') and r.total_rows > 0, str(r)
 
 
+class NutrientControllerTest (AuthControllerTest):
+    def setUp(self):
+        super(NutrientControllerTest, self).setUp()
+        self.controller = NutrientsController(self.db)
+        import_sr25_nutr_def(self.db, self.loop)
+        self.test_login()
+
+    def test_list_nutrients(self):
+        r = self.loop.run_until_complete(
+            self.controller.keys())
+        assert len(r) > 0, r

@@ -1,14 +1,18 @@
+from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import unittest
 import unittest.mock
 from test import CouchDBTestCase
 from test import TestCase, run_test_server
-from .handler import HomeHandler, AddFoodHandler, MealHandler, AuthHandler
+from .handler import (HomeHandler, FoodHandler, MealHandler, AuthHandler,
+                      NutrientHandler)
 from .controller import UserController
 from .model import Nutrient, Food, Meal
 from auth import User
 from . import get_routes
+import tulip
 from tulip.http import client
 import json
+from .importer import import_sr25_nutr_def
 
 
 class HomeHandlerTest(CouchDBTestCase):
@@ -128,3 +132,32 @@ class MealHandlerTest(AuthHandlerTest):
                 assert 'foods' in meal, meal
             r.close()
 
+
+
+class NutrientHandlerTest(AuthHandlerTest):
+    def setUp(self):
+        super(NutrientHandlerTest, self).setUp()
+        self.loop.run_until_complete(Nutrient.sync_design(self.db))
+        self.loop.run_until_complete(Meal.sync_design(self.db))
+        self.handler = NutrientHandler()
+        self.transport = unittest.mock.Mock()
+        self.handler.response = self.transport
+        import_sr25_nutr_def(self.db, self.loop)
+
+    def test_list_nutrients(self):
+        self.test_login()
+        with run_test_server(self.loop, router=get_routes(self.db)) as httpd:
+            url = httpd.url('nutrients')
+            params = (('query', 'name'),)
+            meth = 'get'
+            r = self.loop.run_until_complete(
+                client.request(meth, url, params=params, cookies=self.cookies))
+            content1 = self.loop.run_until_complete(r.read())
+            content = content1.decode()
+            resp = json.loads(content)
+
+            self.assertEqual(r.status, 200)
+            assert 'nutrients' in resp, resp
+            assert isinstance(resp['nutrients'], list), resp['nutrients']
+            assert len(resp['nutrients']) > 0, resp['nutrients']
+            r.close()

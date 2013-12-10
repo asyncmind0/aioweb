@@ -20,7 +20,7 @@ import tulip.http
 
 from urllib.parse import urlparse
 
-from static_handler import StaticFileHandler
+from static_handler import StaticFileHandler, get_routes as get_static_routes
 from router import Router
 from server import HttpServer
 from multithreading import Superviser
@@ -95,11 +95,7 @@ def main():
             config['couchdb'], 'nutrition', )
         import supplementme
         imp.reload(supplementme)
-        router = Router()
-        router.add_handler('/static/favicon.ico', StaticFileHandler(args.staticroot))
-        router.add_handler('/dojo/', StaticFileHandler(join(dirname(__file__), 'static', 'dojo')))
-        router.add_handler('/dijit/', StaticFileHandler(join(dirname(__file__), 'static', 'dojo')))
-        router.add_handler('/jasmine/', StaticFileHandler(join(dirname(__file__), 'static')))
+        router = get_static_routes()
         router.add_handler('/', supplementme.get_routes(db=db))
         return HttpServer(router, debug=True, keep_alive=75)
 

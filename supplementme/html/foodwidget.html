@@ -1,10 +1,22 @@
-<div>
-<h4>Food</h4>
-  <select class="food-select">
+<div class='food-widget' 
+     dojo-data-type="dijit/form/Form">
+  <h2>Foods</h2>
+  <h3>Saved Foods</h3>
+  <select class='food-select'>
   </select>
-  <button class="add-food-button">Add</button>
-  <button class="add-food-button">Add New Food</button>
-  <div data-dojo-type="dijit/form/Form"  class="new-food-form">
-  </div>
-
+  <button class='add-food-button' 
+          data-dojo-attach-event="ondijitclick:onAddFood">
+    Add
+  </button>
+  <input type='text' class='food-name'/>
+  <button class='save-food-button' 
+          data-dojo-attach-point="saveFood"
+          data-dojo-attach-event="ondijitclick:onSaveFood">
+    Save
+  </button>
+  <select class='nutrient-select'>
+  </select>
+  <!--<div data-dojo-type="supplementme.NutrientsWidget"></div>
+  <ol class='nutrients-list'>
+  </ol>-->
 </div>
