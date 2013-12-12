@@ -27,6 +27,11 @@ require([
                    expect(query('.food-widget').length).toEqual(1);
                    expect(query('meal-select > option').length).toBeGreaterThan(1);
                });
+            it("should have nutrients dropdown",
+               function(){
+                   expect(query('.nutrients-select').length).toEqual(1);
+                   expect(query('nutrients-select > option').length).toBeGreaterThan(1);
+               });
         });
     });
 });

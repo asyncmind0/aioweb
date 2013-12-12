@@ -33,7 +33,7 @@ function waitFor(testFx, onReady, timeOutMillis) {
                 }
             }
         }, 100); //< repeat check every 100ms
-};
+}
 
 
 if (system.args.length !== 2) {
@@ -47,28 +47,38 @@ var page = require('webpage').create();
 page.onConsoleMessage = function(msg) {
     console.log(msg);
 };
+page.onError = function(e){
+console.log('ERROR:'+e);
+};
 
-page.open(system.args[1], function(status){
-    if (status !== "success") {
-        console.log("Unable to access network");
-        phantom.exit();
-    } else {
-        waitFor(function(){
-    console.log('phantom');
-            return page.evaluate(function(){
-                return document.body.querySelector('.symbolSummary .pending') === null
+try{
+    page.open(system.args[1], function(status){
+        console.log(status);
+        if (status !== "success") {
+            console.log("Unable to access network");
+            phantom.exit();
+        } else {
+            waitFor(function(){
+                console.log('phantom');
+                return page.evaluate(function(){
+                    return document.body.querySelector('.symbolSummary .pending') === null;
+                });
+            }, function(){
+                var exitCode = page.evaluate(function(){
+                    require(["dojo/json"], function(JSON){
+                        console.log("STATUS:"+window.jsApiReporter.status()+"\n");
+                        console.log("STARTSPEC");
+                        var specs = window.jsApiReporter.specs();
+                        var jsonString = JSON.stringify(specs);
+                        console.log(jsonString);
+                        console.log("ENDSPEC");
+                    });
+                    phantom.exit(exitCode);
+                });
             });
-        }, function(){
-            var exitCode = page.evaluate(function(){
-                console.log("STATUS:"+window.jsApiReporter.status()+"\n");
-                var specs = window.jsApiReporter.specs();
-                for (s in specs){
-                    console.log(specs[s].fullName);
-                    //console.log("\t"+specs[s].description);
-                    console.log("\t"+specs[s].status);
-                    }
-            });
-            phantom.exit(exitCode);
-        });
-    }
-});
+        }
+    });
+
+}catch(e){
+    console.log(e);
+}

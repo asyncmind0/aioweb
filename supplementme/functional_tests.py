@@ -1,6 +1,7 @@
 from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import os
 import sys
+import json
 
 import tulip
 from tulip import streams
@@ -12,6 +13,7 @@ from . import get_routes
 from .model import Nutrient, Meal
 from auth import User
 from static_handler import get_routes as get_static_routes
+from .importer import import_sr25_nutr_def
 
 def connect_write_pipe(file):
     loop = tulip.get_event_loop()
@@ -51,9 +53,12 @@ class FunctionalTests(CouchDBTestCase):
         self.loop.run_until_complete(User.sync_design(self.db))
         self.loop.run_until_complete(Nutrient.sync_design(self.db))
         self.loop.run_until_complete(Meal.sync_design(self.db))
+        import_sr25_nutr_def(self.db, self.loop)
     def _run_phantom(self, url):
         # start subprocess and wrap stdin, stdout, stderr
+        output = []
         phantom_cmd = "phantomjs static/run-jasmine.js %s" % url
+        print(phantom_cmd)
         p = Popen(phantom_cmd.split(),
                   stdin=PIPE, stdout=PIPE, stderr=PIPE)
         stdout = connect_read_pipe(p.stdout)
@@ -73,21 +78,48 @@ class FunctionalTests(CouchDBTestCase):
             for f in done:
                 stream = registered.pop(f)
                 res = f.result()
-                print(name[stream], res.decode('ascii').rstrip())
+                output.append(res.decode('utf8').rstrip())
                 if res != b'':
                     registered[tulip.Task(stream.readline())] = stream
-            timeout = 0.0
-        return res
+            timeout = 5.0
+        return output
 
     def test_main_page(self):
         import logging
         logging.basicConfig(level=logging.DEBUG)
         router = get_static_routes()
         router.add_handler('/', get_routes(db=self.db))
-        with run_test_server(self.loop, router=router) as httpd:
+        with run_test_server(self.loop, router=router, port=9999) as httpd:
             url = httpd.url("/")
+            print(url)
             meth = 'get'
-            sj_debug() ###############################################################
             r = self.loop.run_until_complete(
                 self._run_phantom(url))
-            print(r.decode('utf-8'))
+            spec = []
+            startspec = False
+            for line in r:
+                if line.startswith('ENDSPEC'):
+                    break
+                if startspec:
+                    spec.append(line)
+                if line.startswith('STARTSPEC'):
+                    startspec = True
+            spec = json.loads("".join(spec))
+            for sp in spec:
+                print(sp['description'])
+                print("\t"+sp['status'])
+
+    def test_main_page_ghost(self):
+        from ghost import Ghost
+        import logging
+        logging.basicConfig(level=logging.DEBUG)
+        router = get_static_routes()
+        router.add_handler('/', get_routes(db=self.db))
+        with run_test_server(self.loop, router=router, port=9999) as httpd:
+            url = httpd.url("/")
+            print(url)
+            meth = 'get'
+            ghost = Ghost()
+            page, extra_resources = ghost.open(url)
+            sj_debug() ###############################################################
+            assert page.http_status == 200 
