@@ -137,5 +137,5 @@ class NutrientControllerTest (AuthControllerTest):
 
     def test_list_nutrients(self):
         r = self.loop.run_until_complete(
-            self.controller.keys())
+            self.controller.all())
         assert len(r) > 0, r

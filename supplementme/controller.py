@@ -20,6 +20,10 @@ class NutrientsController(Controller):
         n = yield from self.db.view('nutrient', 'keys', group=True)
         return [d['key'] for d in n.rows]
 
+    def all(self):
+        nutrients = yield from Nutrient.all(self.db)
+        return [dict(id=n.tag, name=n.name) for n in nutrients]
+
     def validate_nutrients(self, nutrient_tags):
         validated = yield from Nutrient.view(
             'by_tag', self.db, keys=nutrient_tags)

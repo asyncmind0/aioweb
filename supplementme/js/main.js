@@ -8,6 +8,8 @@ require([
     "dojo/store/Cache",
     "dojo/store/Observable",
     "dojo/ready", "dojo/parser", "dijit/form/Form",
+    "dijit/form/FilteringSelect",
+    "dojo/when",
     "dojo/text!supplementme/foodwidget.html", 
     "dojo/text!supplementme/mealwidget.html", 
 ], function(declare, _WidgetBase,
@@ -18,6 +20,8 @@ require([
             Cache,
             Observable,
             ready, parser, Form,
+            FilteringSelect,
+            when,
             food_template,
             meal_template
            ){
@@ -52,18 +56,27 @@ require([
                     var cacheStore = new Memory({ });
                     this.foodStore = new Cache(masterStore, cacheStore);
                     //this.foodStore.query({'name':'test'});
-                    var nutrienStore = new JsonRest({
-                        target: "/nutrients/"
+                    var nutrientStore = new JsonRest({
+                        target: "/nutrients/",
                     });
-                    this.nutrientStore = new Cache(nutrientStore, new Memory({}));
+                    this.nutrientStore = new Memory();
+                    this.nutrientStoreCache = new Cache(nutrientStore, this.nutrientStore);
+                },
+                startup: function (){
+                    this.inherited(arguments);
+                    // load cache
+                    this.nutrientStoreCache.query({id:""});
+                    var filteringSelect = new FilteringSelect({
+                        store: this.nutrientStore,
+                    }, this.nutrientsSelect);
+                    filteringSelect.startup ();
                 },
                 onSaveFood: function(e){
                     console.log('onSaveFood');
                     var food = e;
                 },
                 onAddFood: function(e){
-                    console.log('onAddFood')
-                    food =
+                    console.log('onAddFood');
                 }
             });
 
@@ -87,7 +100,7 @@ require([
                     var meal = e;
                 },
                 onAddMeal: function(e){
-                    console.log('onAddMeal')
+                    console.log('onAddMeal');
                 }
             });
     ready(function(){

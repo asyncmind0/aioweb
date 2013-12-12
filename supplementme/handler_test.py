@@ -133,7 +133,6 @@ class MealHandlerTest(AuthHandlerTest):
             r.close()
 
 
-
 class NutrientHandlerTest(AuthHandlerTest):
     def setUp(self):
         super(NutrientHandlerTest, self).setUp()
@@ -157,7 +156,6 @@ class NutrientHandlerTest(AuthHandlerTest):
             resp = json.loads(content)
 
             self.assertEqual(r.status, 200)
-            assert 'nutrients' in resp, resp
-            assert isinstance(resp['nutrients'], list), resp['nutrients']
-            assert len(resp['nutrients']) > 0, resp['nutrients']
+            assert isinstance(resp, list), resp
+            assert len(resp) > 0, resp
             r.close()

@@ -75,9 +75,8 @@ class MealHandler(Handler):
 class NutrientHandler(Handler):
     renderer = JsonRenderer()
 
-    @authenticated
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
-        self.controller = NutrientsController(self.db, session=self.session)
-        result = yield from self.controller.keys()
-        self.render(nutrients=result)
+        self.controller = NutrientsController(self.db)
+        result = yield from self.controller.all()
+        self.render(result)
