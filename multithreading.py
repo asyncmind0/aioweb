@@ -2,9 +2,15 @@ import os
 import socket
 import signal
 import time
+import logging
 import tulip
 import tulip.http
 from tulip.http import websocket
+import threading
+import time
+from watchdog.observers import Observer
+from watchdog.events import LoggingEventHandler
+
 
 class ChildProcess:
 
@@ -15,6 +21,7 @@ class ChildProcess:
         self.sock = sock
         self.protocol_factory = protocol_factory
         self.ssl = ssl
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def start(self):
         # start server
@@ -29,7 +36,7 @@ class ChildProcess:
         f = loop.start_serving(
             self.protocol_factory, sock=self.sock, ssl=self.ssl)
         x = loop.run_until_complete(f)[0]
-        print('Starting srv worker process {} on {}'.format(
+        self.logger.info('Starting srv worker process {} on {}'.format(
             os.getpid(), x.getsockname()))
 
         # heartbeat
@@ -52,7 +59,7 @@ class ChildProcess:
         while True:
             msg = yield from reader.read()
             if msg is None:
-                print('Superviser is dead, {} stopping...'.format(os.getpid()))
+                self.logger.info('Superviser is dead, {} stopping...'.format(os.getpid()))
                 self.loop.stop()
                 break
             elif msg.tp == websocket.MSG_PING:
@@ -74,7 +81,9 @@ class Worker:
         self.sock = sock
         self.protocol_factory = protocol_factory
         self.ssl = ssl
+        self.shutdown = False
         self.start()
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def start(self):
         assert not self._started
@@ -99,7 +108,7 @@ class Worker:
             tulip.set_event_loop(None)
 
             # setup process
-            process = ChildProcess(up_read, down_write, args, sock, 
+            process = ChildProcess(up_read, down_write, args, sock,
                                    self.protocol_factory, self.ssl)
             process.start()
 
@@ -107,12 +116,16 @@ class Worker:
     def heartbeat(self, writer):
         while True:
             yield from tulip.sleep(15)
+            if not self.shutdown:
+                writer.close()
+                self.kill()
+                return
 
             if (time.monotonic() - self.ping) < 30:
                 writer.ping()
             else:
-                print('Restart unresponsive worker process: {}'.format(
-                    self.pid))
+                self.logger.info(
+                    'Restart unresponsive worker process: {}'.format(self.pid))
                 self.kill()
                 self.start()
                 return
@@ -121,9 +134,12 @@ class Worker:
     def chat(self, reader):
         while True:
             msg = yield from reader.read()
+            if not self.shutdown:
+                self.kill()
+                return
             if msg is None:
-                print('Restart unresponsive worker process: {}'.format(
-                    self.pid))
+                self.logger.info(
+                    'Restart unresponsive worker process: {}'.format(self.pid))
                 self.kill()
                 self.start()
                 return
@@ -165,6 +181,7 @@ class Superviser:
         self.loop = tulip.get_event_loop()
         self.args = args
         self.workers = []
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def start(self, protocol_factory, ssl):
         # bind socket
@@ -176,7 +193,32 @@ class Superviser:
 
         # start processes
         for idx in range(self.args.workers):
-            self.workers.append(Worker(self.loop, self.args, sock, protocol_factory, ssl))
+            self.workers.append(
+                Worker(self.loop, self.args, sock, protocol_factory, ssl))
 
-        self.loop.add_signal_handler(signal.SIGINT, lambda: self.loop.stop())
+        results = []
+
+        event_handler = LoggingEventHandler()
+        observer = Observer()
+        observer.schedule(event_handler, path='.', recursive=True)
+        observer.start()
+
+        def kill_workers(shutdown=False):
+            for worker in self.workers:
+                worker.shutdown = shutdown
+                worker.kill()
+                self.logger.debug("Restarting")
+                self.loop.stop()
+
+        def kill_server():
+            observer.stop()
+            observer.join()
+            running = False
+            kill_workers(True)
+            self.loop.stop()
+            self.logger.debug("Exiting")
+            exit(0)
+
+        self.loop.add_signal_handler(signal.SIGINT, kill_server)
+        self.loop.add_signal_handler(signal.SIGTERM, kill_workers)
         self.loop.run_forever()
