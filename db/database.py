@@ -42,6 +42,12 @@ class Bunch():
 
 
 class ResultList(Bunch):
+    def __len__(self):
+        if 'total_rows' in self.__dict__:
+            return self.total_rows
+        else:
+            return 0
+
     def __iter__(self):
         for row in self.__dict__['rows']:
             yield row['value']
