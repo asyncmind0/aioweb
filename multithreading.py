@@ -8,9 +8,21 @@ import tulip.http
 from tulip.http import websocket
 import threading
 import time
+import tulip
 from watchdog.observers import Observer
-from watchdog.events import LoggingEventHandler
+from watchdog.events import LoggingEventHandler, FileSystemEventHandler
+init_modules=['watchdog', 'Observer', 'FileSystemEventHandler']
 
+class MyStreamProtocol(tulip.StreamProtocol):
+    def connection_lost(self, exc):
+        self.transport = None
+
+        if exc is not None:
+            self.set_exception(exc)
+        else:
+            if not self._parser_buffer or self._parser_buffer._waiter._state != tulip.futures._PENDING:
+                return
+            self.feed_eof()
 
 class ChildProcess:
 
@@ -49,9 +61,9 @@ class ChildProcess:
     def heartbeat(self):
         # setup pipes
         read_transport, read_proto = yield from self.loop.connect_read_pipe(
-            tulip.StreamProtocol, os.fdopen(self.up_read, 'rb'))
+            MyStreamProtocol, os.fdopen(self.up_read, 'rb'))
         write_transport, _ = yield from self.loop.connect_write_pipe(
-            tulip.StreamProtocol, os.fdopen(self.down_write, 'wb'))
+            MyStreamProtocol, os.fdopen(self.down_write, 'wb'))
 
         reader = read_proto.set_parser(websocket.WebSocketParser())
         writer = websocket.WebSocketWriter(write_transport)
@@ -65,6 +77,8 @@ class ChildProcess:
             elif msg.tp == websocket.MSG_PING:
                 writer.pong()
             elif msg.tp == websocket.MSG_CLOSE:
+                self.logger.debug("Got close message, quitting")
+                self.loop.stop()
                 break
 
         read_transport.close()
@@ -82,6 +96,7 @@ class Worker:
         self.protocol_factory = protocol_factory
         self.ssl = ssl
         self.shutdown = False
+        self.restart = False
         self.start()
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -116,10 +131,15 @@ class Worker:
     def heartbeat(self, writer):
         while True:
             yield from tulip.sleep(15)
-            if not self.shutdown:
+            if self.shutdown:
                 writer.close()
                 self.kill()
-                return
+            if self.restart:
+                self.logger.info(
+                    'Restarting worker process: {}'.format(self.pid))
+                writer.close()
+                self.kill()
+                self.restart = False
 
             if (time.monotonic() - self.ping) < 30:
                 writer.ping()
@@ -131,17 +151,18 @@ class Worker:
                 return
 
     @tulip.task
-    def chat(self, reader):
+    def chat(self, reader, proto):
         while True:
             msg = yield from reader.read()
-            if not self.shutdown:
-                self.kill()
-                return
-            if msg is None:
+            if msg is None or self.restart or self.shutdown:
                 self.logger.info(
-                    'Restart unresponsive worker process: {}'.format(self.pid))
+                    'Restart worker process: {}'.format(self.pid))
+                reader.close()
                 self.kill()
-                self.start()
+                self.restart = False
+                if not self.shutdown:
+                    self.start()
+                self.shutdown = False
                 return
             elif msg.tp == websocket.MSG_PONG:
                 self.ping = time.monotonic()
@@ -150,9 +171,9 @@ class Worker:
     def connect(self, pid, up_write, down_read):
         # setup pipes
         read_transport, proto = yield from self.loop.connect_read_pipe(
-            tulip.StreamProtocol, os.fdopen(down_read, 'rb'))
+            MyStreamProtocol, os.fdopen(down_read, 'rb'))
         write_transport, _ = yield from self.loop.connect_write_pipe(
-            tulip.StreamProtocol, os.fdopen(up_write, 'wb'))
+            MyStreamProtocol, os.fdopen(up_write, 'wb'))
 
         # websocket protocol
         reader = proto.set_parser(websocket.WebSocketParser())
@@ -163,7 +184,7 @@ class Worker:
         self.ping = time.monotonic()
         self.rtransport = read_transport
         self.wtransport = write_transport
-        self.chat_task = self.chat(reader)
+        self.chat_task = self.chat(reader, proto)
         self.heartbeat_task = self.heartbeat(writer)
 
     def kill(self):
@@ -173,6 +194,22 @@ class Worker:
         self.rtransport.close()
         self.wtransport.close()
         os.kill(self.pid, signal.SIGTERM)
+
+    def reload_modules(self):
+        import sys
+        if 'init_modules' in globals():
+            global init_modules
+            curdir = os.getcwd()
+            for key, module in list(sys.modules.items()):
+                if hasattr(module,'__file__'):
+                    if os.path.commonprefix([module.__file__, curdir]) == curdir:
+                        print("reloading:", key)
+                        del(sys.modules[key])
+                else:
+                    pass
+                    #print(module)
+        else:
+            init_modules = sys.modules.keys()
 
 
 class Superviser:
@@ -198,17 +235,36 @@ class Superviser:
 
         results = []
 
-        event_handler = LoggingEventHandler()
+        def reload_worker_modules():
+            for worker in self.workers:
+                worker.reload_modules()
+
+        class ReloadingEventHandler(FileSystemEventHandler):
+            def __init__(self, loop):
+                super(ReloadingEventHandler, self).__init__()
+                self.loop = loop
+            def on_modified(self, event):
+                src_path = event.src_path.decode('utf8')
+                basename = os.path.basename(src_path)
+                if basename.endswith('py') and \
+                   not basename.startswith('.') and\
+                   not basename.startswith('flycheck'):
+                    print(src_path)
+                    #self.loop.call_soon_threadsafe(reload_worker_modules)
+                    self.loop.call_soon_threadsafe(kill_workers)
+
+        reload_handler = ReloadingEventHandler(self.loop)
         observer = Observer()
-        observer.schedule(event_handler, path='.', recursive=True)
+        observer.schedule(reload_handler, path='.', recursive=True)
         observer.start()
 
         def kill_workers(shutdown=False):
             for worker in self.workers:
                 worker.shutdown = shutdown
-                worker.kill()
-                self.logger.debug("Restarting")
-                self.loop.stop()
+                worker.restart = True
+                if shutdown:
+                    pass
+                    #self.loop.stop()
 
         def kill_server():
             observer.stop()

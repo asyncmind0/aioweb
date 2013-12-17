@@ -26,6 +26,7 @@ from server import HttpServer
 from multithreading import Superviser
 from config import config
 from db.database import CouchDBAdapter
+from debug import set_except_hook
 
 
 ARGS = argparse.ArgumentParser(description="Run simple http server.")
@@ -61,6 +62,7 @@ def configure_logging():
 
 
 def main():
+    set_except_hook()
     args = ARGS.parse_args()
 
     if ':' in args.host:

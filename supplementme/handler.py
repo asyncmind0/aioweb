@@ -20,6 +20,7 @@ class HomeHandler(Handler):
         keys = [n for n in keys.rows]
         logging.debug("number of nutrients: %s" % len(keys))
         scripts = []  # [{'src':'test.js'}]
+        print("rELoADED")
 
         self.render('home', query=[{'key': key, 'value': value}
                                    for key, value in query.items()],
