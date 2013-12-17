@@ -37,18 +37,25 @@ class Router(ErrorHandlerMixin):
 
     def reload_handlers(self, module_path=None):
         reload_modules = set()
+        new_handlers = []
+        reloaded_handlers = set()
         for t in self.handlers:
             matcher, handler_class_list, handler_args = t
             if isinstance(handler_class_list, Router):
                 handler_class_list.reload_handlers(module_path)
-                return
-            new_handlers = []
-            for handler_class in handler_class_list:
-                hmodule = handler_class.__module__
-                module = sys.modules[hmodule]
-                hmodule_path = module.__file__
-                #if not module_path or module_path == hmodule_path:
-                print("Reloading:%s %s" % (module_path, module))
-                module = imp.reload(sys.modules[hmodule])
-                new_handlers.append(getattr(module, handler_class.__name__))
-            t[1] = new_handlers
+            else:
+                new_handler_class_list = []
+                for handler_class in handler_class_list:
+                    hmodule = handler_class.__module__
+                    module = sys.modules[hmodule]
+                    hmodule_path = module.__file__
+                    if not module_path or (
+                            module_path == hmodule_path 
+                            and module_path not in reloaded_handlers):
+                        print("Reloading:%s %s:%s" % (module_path, module, handler_class))
+                        module = imp.reload(module)
+                        reloaded_handlers.add(module_path)
+                    new_handler_class_list.append(getattr(module, handler_class.__name__))
+                t[1] = new_handler_class_list
+            new_handlers.append(t)
+        self.handlers = new_handlers

@@ -11,23 +11,21 @@ import time
 import tulip
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler, FileSystemEventHandler
-init_modules=['watchdog', 'Observer', 'FileSystemEventHandler']
+
 
 class MyStreamProtocol(tulip.StreamProtocol):
+    """Override to handle disconnection gracefully"""
     def connection_lost(self, exc):
         self.transport = None
 
         if exc is not None:
             self.set_exception(exc)
         else:
-            if not self._parser_buffer or self._parser_buffer._waiter._state != tulip.futures._PENDING:
+            if not self._parser_buffer or \
+               self._parser_buffer._waiter._state != tulip.futures._PENDING:
                 return
             self.feed_eof()
-            
-debugging = True
-def set_debug(isdebug):
-    global debugging
-    debugging = isdebug
+
 
 class ChildProcess:
 
@@ -76,7 +74,8 @@ class ChildProcess:
         while True:
             msg = yield from reader.read()
             if msg is None:
-                self.logger.info('Superviser is dead, {} stopping...'.format(os.getpid()))
+                self.logger.info(
+                    'Superviser is dead, {} stopping...'.format(os.getpid()))
                 self.loop.stop()
                 break
             elif msg.tp == websocket.MSG_PING:
@@ -85,6 +84,8 @@ class ChildProcess:
                 self.logger.debug("Got close message, quitting")
                 self.loop.stop()
                 break
+            elif msg.data.startswith("RELOAD"):
+                self.protocol_factory.reload_handlers(msg.data.split(':')[1])
 
         read_transport.close()
         write_transport.close()
@@ -128,8 +129,9 @@ class Worker:
             tulip.set_event_loop(None)
 
             # setup process
-            process = ChildProcess(up_read, down_write, args, sock,
-                                   self.protocol_factory, self.ssl)
+            process = ChildProcess(
+                up_read, down_write, args, sock, self.protocol_factory,
+                self.ssl)
             process.start()
 
     @tulip.task
@@ -150,7 +152,6 @@ class Worker:
             if (time.monotonic() - self.ping) < 30:
                 writer.ping()
             elif not debugging:
-                print(debugging)
                 self.logger.info(
                     'Restart unresponsive worker process: {}'.format(self.pid))
                 self.kill()
@@ -183,16 +184,19 @@ class Worker:
             MyStreamProtocol, os.fdopen(up_write, 'wb'))
 
         # websocket protocol
-        reader = proto.set_parser(websocket.WebSocketParser())
-        writer = websocket.WebSocketWriter(write_transport)
+        self.reader = proto.set_parser(websocket.WebSocketParser())
+        self.writer = websocket.WebSocketWriter(write_transport)
 
         # store info
         self.pid = pid
         self.ping = time.monotonic()
         self.rtransport = read_transport
         self.wtransport = write_transport
-        self.chat_task = self.chat(reader, proto)
-        self.heartbeat_task = self.heartbeat(writer)
+        self.chat_task = self.chat(self.reader, proto)
+        self.heartbeat_task = self.heartbeat(self.writer)
+
+    def send_reload(self, path):
+        self.writer.send("RELOAD:%s" % path)
 
     def kill(self):
         self._started = False
@@ -201,22 +205,6 @@ class Worker:
         self.rtransport.close()
         self.wtransport.close()
         os.kill(self.pid, signal.SIGTERM)
-
-    def reload_modules(self):
-        import sys
-        if 'init_modules' in globals():
-            global init_modules
-            curdir = os.getcwd()
-            for key, module in list(sys.modules.items()):
-                if hasattr(module,'__file__'):
-                    if os.path.commonprefix([module.__file__, curdir]) == curdir:
-                        print("reloading:", key)
-                        del(sys.modules[key])
-                else:
-                    pass
-                    #print(module)
-        else:
-            init_modules = sys.modules.keys()
 
 
 class Superviser:
@@ -243,22 +231,22 @@ class Superviser:
         results = []
 
         def reload_worker_modules(module_path):
-            protocol_factory.reload_handlers(module_path)
-            #for worker in self.workers:
-            #    worker.reload_modules()
+            for worker in self.workers:
+                worker.send_reload(module_path)
 
         class ReloadingEventHandler(FileSystemEventHandler):
             def __init__(self, loop):
                 super(ReloadingEventHandler, self).__init__()
                 self.loop = loop
+
             def on_modified(self, event):
                 src_path = event.src_path.decode('utf8')
                 basename = os.path.basename(src_path)
                 if basename.endswith('py') and \
                    not basename.startswith('.') and\
                    not basename.startswith('flycheck'):
-                    self.loop.call_soon_threadsafe(reload_worker_modules, src_path)
-                    #self.loop.call_soon_threadsafe(kill_workers)
+                    self.loop.call_soon_threadsafe(
+                        reload_worker_modules, src_path)
 
         reload_handler = ReloadingEventHandler(self.loop)
         observer = Observer()
@@ -270,8 +258,7 @@ class Superviser:
                 worker.shutdown = shutdown
                 worker.restart = True
                 if shutdown:
-                    pass
-                    #self.loop.stop()
+                    self.loop.stop()
 
         def kill_server():
             observer.stop()

@@ -103,6 +103,7 @@ def main():
 
         def reload_handlers(self, module_path=None):
             self.router.reload_handlers(module_path)
+            pass
 
     superviser = Superviser(args)
     superviser.start(ProtocolFactory(), sslcontext)
