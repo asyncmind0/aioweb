@@ -23,6 +23,11 @@ class MyStreamProtocol(tulip.StreamProtocol):
             if not self._parser_buffer or self._parser_buffer._waiter._state != tulip.futures._PENDING:
                 return
             self.feed_eof()
+            
+debugging = True
+def set_debug(isdebug):
+    global debugging
+    debugging = isdebug
 
 class ChildProcess:
 
@@ -129,21 +134,23 @@ class Worker:
 
     @tulip.task
     def heartbeat(self, writer):
+        global debugging
         while True:
             yield from tulip.sleep(15)
-            if self.shutdown:
-                writer.close()
-                self.kill()
-            if self.restart:
+            if self.shutdown or self.restart:
                 self.logger.info(
-                    'Restarting worker process: {}'.format(self.pid))
+                    'Restarting/Shutting worker process: {}'.format(self.pid))
                 writer.close()
                 self.kill()
+                if self.restart:
+                    self.start()
                 self.restart = False
+                return
 
             if (time.monotonic() - self.ping) < 30:
                 writer.ping()
-            else:
+            elif not debugging:
+                print(debugging)
                 self.logger.info(
                     'Restart unresponsive worker process: {}'.format(self.pid))
                 self.kill()
@@ -235,9 +242,10 @@ class Superviser:
 
         results = []
 
-        def reload_worker_modules():
-            for worker in self.workers:
-                worker.reload_modules()
+        def reload_worker_modules(module_path):
+            protocol_factory.reload_handlers(module_path)
+            #for worker in self.workers:
+            #    worker.reload_modules()
 
         class ReloadingEventHandler(FileSystemEventHandler):
             def __init__(self, loop):
@@ -249,9 +257,8 @@ class Superviser:
                 if basename.endswith('py') and \
                    not basename.startswith('.') and\
                    not basename.startswith('flycheck'):
-                    print(src_path)
-                    #self.loop.call_soon_threadsafe(reload_worker_modules)
-                    self.loop.call_soon_threadsafe(kill_workers)
+                    self.loop.call_soon_threadsafe(reload_worker_modules, src_path)
+                    #self.loop.call_soon_threadsafe(kill_workers)
 
         reload_handler = ReloadingEventHandler(self.loop)
         observer = Observer()

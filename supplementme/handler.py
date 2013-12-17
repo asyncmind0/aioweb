@@ -14,13 +14,12 @@ class HomeHandler(Handler):
     renderer = HtmlRenderer([os.path.join(os.path.dirname(__file__), 'html')])
 
     def __call__(self, request_args=None, **kwargs):
-        controller = NutrientsController(self.db)
+        controller = NutrientsController()
         query = self.query
-        keys = yield from Nutrient.all(self.db)
-        keys = [n for n in keys.rows]
+        keys = yield from controller.all()
+        keys = [n for n in keys]
         logging.debug("number of nutrients: %s" % len(keys))
         scripts = []  # [{'src':'test.js'}]
-        print("rELoADED")
 
         self.render('home', query=[{'key': key, 'value': value}
                                    for key, value in query.items()],
@@ -32,7 +31,7 @@ class AuthHandler(Handler):
 
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
-        controller = AuthController(self.db)
+        controller = AuthController()
         form = self.get_form_data(True)
         session = yield from controller.login(
             form['username'].pop(), form['password'].pop())
@@ -54,7 +53,7 @@ class MealHandler(Handler):
     @authenticated
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
-        self.controller = MealController(self.db, session=self.session)
+        self.controller = MealController(session=self.session)
         result = {}
         if 'add' in request_args:
             result = yield from self.add_meal()
@@ -78,6 +77,6 @@ class NutrientHandler(Handler):
 
     @tulip.coroutine
     def __call__(self, request_args=None, **kwargs):
-        self.controller = NutrientsController(self.db)
+        self.controller = NutrientsController()
         result = yield from self.controller.all()
         self.render(result)

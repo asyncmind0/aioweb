@@ -19,7 +19,7 @@ class HomeHandlerTest(CouchDBTestCase):
     def setUp(self):
         super(HomeHandlerTest, self).setUp()
         self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.handler = HomeHandler(self.db)
+        self.handler = HomeHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
 
@@ -36,7 +36,7 @@ class AuthHandlerTest(CouchDBTestCase):
     def setUp(self):
         super(AuthHandlerTest, self).setUp()
         self.loop.run_until_complete(User.sync_design(self.db))
-        self.auth_handler = AuthHandler(self.db)
+        self.auth_handler = AuthHandler()
         transport = unittest.mock.Mock()
         self.auth_handler.response = transport
         self.test_user = 'testuser'
@@ -51,7 +51,7 @@ class AuthHandlerTest(CouchDBTestCase):
         self.cookies = None
 
     def test_login(self):
-        with run_test_server(self.loop, router=get_routes(self.db)) as httpd:
+        with run_test_server(self.loop, router=get_routes()) as httpd:
             url = httpd.url('auth', 'login')
             data = dict(username=self.test_user, password=self.test_pass)
             meth = 'post'
@@ -94,7 +94,7 @@ class MealHandlerTest(AuthHandlerTest):
 
     def test_add_meal(self):
         self.test_login()
-        with run_test_server(self.loop, router=get_routes(self.db)) as httpd:
+        with run_test_server(self.loop, router=get_routes()) as httpd:
             url = httpd.url('meal', 'add')
             meth = 'post'
             food = dict(name="somefood",
@@ -114,7 +114,7 @@ class MealHandlerTest(AuthHandlerTest):
 
     def test_search_meal(self):
         self.test_add_meal()
-        with run_test_server(self.loop, router=get_routes(self.db)) as httpd:
+        with run_test_server(self.loop, router=get_routes()) as httpd:
             url = httpd.url('meal')
             params = (('query', 'name'),)
             meth = 'get'
@@ -145,7 +145,7 @@ class NutrientHandlerTest(AuthHandlerTest):
 
     def test_list_nutrients(self):
         self.test_login()
-        with run_test_server(self.loop, router=get_routes(self.db)) as httpd:
+        with run_test_server(self.loop, router=get_routes()) as httpd:
             url = httpd.url('nutrients')
             params = (('query', 'name'),)
             meth = 'get'

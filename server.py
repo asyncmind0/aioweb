@@ -25,10 +25,11 @@ class HttpServer(tulip.http.ServerHttpProtocol):
         response = None
         # logging.debug('method = {!r}; path = {!r}; version = {!r}'.format(
         #    message.method, message.path, message.version))
-        handlers, args = self.router.get_handler(message.path)
+        handlers, request_args, handler_args = self.router.get_handler(message.path)
         if handlers:
             for handler in handlers:
                 try:
+                    handler = handler(**handler_args)
                     yield from handler.initialize(self, message, payload,
                                                   prev_response=response)
                 except Exception as e:
@@ -37,7 +38,7 @@ class HttpServer(tulip.http.ServerHttpProtocol):
                     # response = self.router.handle_error(e)
                 else:
                     try:
-                        response = handler(request_args=args)
+                        response = handler(request_args=request_args)
                         if (inspect.isgenerator(response) or
                                 isinstance(response, tulip.Future)):
                             response = yield from response

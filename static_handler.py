@@ -13,21 +13,23 @@ def get_routes(router=None):
     if not router:
         router = Router()
     router.add_handler(
-        '/static/favicon.ico', StaticFileHandler(config['default']['staticroot']))
-    router.add_handler('/dojo/', StaticFileHandler(
-        join(dirname(__file__), 'static', 'dojo')))
-    router.add_handler('/dijit/', StaticFileHandler(
-        join(dirname(__file__), 'static', 'dojo')))
+        '/static/favicon.ico', StaticFileHandler,
+        dict(staticroot=config['default']['staticroot']))
+    router.add_handler('/dojo/', StaticFileHandler,
+                       dict(staticroot=join(dirname(__file__), 'static', 'dojo')))
+    router.add_handler('/dijit/', StaticFileHandler,
+                       dict(staticroot=join(dirname(__file__), 'static', 'dojo')))
     router.add_handler(
-        '/jasmine/', StaticFileHandler(join(dirname(__file__), 'static', 
-                                            config['default']['jasmine']),
-                                       baseurl='/jasmine/'))
+        '/jasmine/', StaticFileHandler, 
+        dict(staticroot=join(dirname(__file__), 'static',
+                             config['default']['jasmine']),
+             baseurl='/jasmine/'))
     return router
 
 
 class StaticFileHandler(Handler):
-    def __init__(self, staticroot, baseurl='/'):
-        super(StaticFileHandler, self).__init__(write_headers=False)
+    def __init__(self, staticroot='static', baseurl='/'):
+        super(StaticFileHandler, self).__init__()
         self.staticroot = staticroot
         self.baseurl = baseurl
 

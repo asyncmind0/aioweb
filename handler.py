@@ -16,10 +16,9 @@ import http.cookies
 class Handler(ErrorHandlerMixin):
     request = None
 
-    def __init__(self, db=None, write_headers=True):
+    def __init__(self, write_headers=True):
         self.response = None
         self.write_headers = write_headers
-        self.db = db
         self.logger = logging.getLogger(self.__class__.__name__.lower())
 
     def initialize(self, server, message, payload, prev_response=None):

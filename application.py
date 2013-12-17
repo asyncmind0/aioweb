@@ -24,7 +24,6 @@ from static_handler import StaticFileHandler, get_routes as get_static_routes
 from router import Router
 from server import HttpServer
 from multithreading import Superviser
-from config import config
 from db.database import CouchDBAdapter
 from debug import set_except_hook
 
@@ -91,18 +90,22 @@ def main():
     else:
         sslcontext = None
 
-    def protocol_factory():
-        db = CouchDBAdapter(
-            'http://%(username)s:%(password)s@localhost:5984/' %
-            config['couchdb'], 'nutrition', )
-        import supplementme
-        imp.reload(supplementme)
-        router = get_static_routes()
-        router.add_handler('/', supplementme.get_routes(db=db))
-        return HttpServer(router, debug=True, keep_alive=75)
+    class ProtocolFactory():
+        def __init__(self):
+            import supplementme
+            imp.reload(supplementme)
+            router = get_static_routes()
+            router.add_handler('/', supplementme.get_routes())
+            self.router = router
+
+        def __call__(self):
+            return HttpServer(self.router, debug=True, keep_alive=75)
+
+        def reload_handlers(self, module_path=None):
+            self.router.reload_handlers(module_path)
 
     superviser = Superviser(args)
-    superviser.start(protocol_factory, sslcontext)
+    superviser.start(ProtocolFactory(), sslcontext)
 
 
 if __name__ == '__main__':

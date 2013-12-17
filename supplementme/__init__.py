@@ -5,17 +5,17 @@ from .handler import (
 from router import Router
 
 
-def get_routes(db):
+def get_routes():
     return Router("/", (
-        ("/$", HomeHandler(db)),
-        ("/(supplementme)/(.*).js", StaticFileHandler(
-            join(dirname(__file__), 'js'), baseurl="/supplementme/")),
-        ("/(supplementme)/(.*).html", StaticFileHandler(
-            join(dirname(__file__), 'html'), baseurl="/supplementme/")),
-        ("/(supplementme)/(.*).css", StaticFileHandler(
-            join(dirname(__file__), 'css'), baseurl="/supplementme/")),
-        ("/auth/login$", AuthHandler(db)),
-        ("/meal/{0,1}(.*)$", MealHandler(db)),
-        ("/nutrients/{0,1}(.*)$", NutrientHandler(db)),
-        ("/food/{0,1}(.*)$", FoodHandler(db)))
+        ("/$", HomeHandler),
+        ("/(supplementme)/(.*).js", StaticFileHandler, dict(
+            staticroot=join(dirname(__file__), 'js'), baseurl="/supplementme/")),
+        ("/(supplementme)/(.*).html", StaticFileHandler, dict(
+            staticroot=join(dirname(__file__), 'html'), baseurl="/supplementme/")),
+        ("/(supplementme)/(.*).css", StaticFileHandler, dict(
+            staticroot=join(dirname(__file__), 'css'), baseurl="/supplementme/")),
+        ("/auth/login$", AuthHandler),
+        ("/meal/{0,1}(.*)$", MealHandler),
+        ("/nutrients/{0,1}(.*)$", NutrientHandler),
+        ("/food/{0,1}(.*)$", FoodHandler))
     )
