@@ -29,7 +29,7 @@ class Router(ErrorHandlerMixin):
                 if isinstance(handler, Router):
                     return handler.get_handler(url)
                 return handler, match.groups(), handler_args
-        return None, None
+        return None, None, None
 
     def get_error_handler(self, url, exception):
         """Default router error handler"""

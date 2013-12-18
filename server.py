@@ -7,20 +7,21 @@ import os
 import sys
 import inspect
 
-import tulip
-import tulip.http
+import asyncio
+from aiohttp import server
+import aiohttp
 import cgi
 from errors import ErrorHandlerMixin
 
 
-class HttpServer(tulip.http.ServerHttpProtocol):
+class HttpServer(server.ServerHttpProtocol):
     def __init__(self, router, *args, **kwargs):
         super(HttpServer, self).__init__(*args, **kwargs)
         self.router = router
         self.default_args = kwargs.get('default_args')
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    @tulip.coroutine
+    @asyncio.coroutine
     def handle_request(self, message, payload):
         response = None
         # logging.debug('method = {!r}; path = {!r}; version = {!r}'.format(
@@ -30,7 +31,7 @@ class HttpServer(tulip.http.ServerHttpProtocol):
             for handler in handlers:
                 try:
                     handler = handler(**handler_args)
-                    yield from handler.initialize(self, message, payload,
+                    handler.initialize(self, message, payload,
                                                   prev_response=response)
                 except Exception as e:
                     return self.handle_error(500, message, payload, exc=e)
@@ -40,18 +41,18 @@ class HttpServer(tulip.http.ServerHttpProtocol):
                     try:
                         response = handler(request_args=request_args)
                         if (inspect.isgenerator(response) or
-                                isinstance(response, tulip.Future)):
+                                isinstance(response, asyncio.Future)):
                             response = yield from response
-                        if not isinstance(response, tulip.http.Response):
+                        if not isinstance(response, aiohttp.Response):
                             response = handler.response
-                    except tulip.http.errors.HttpStatusException as e:
+                    except aiohttp.errors.HttpStatusException as e:
                         self.logger.debug("%s: %s", e.code, e.message)
                         return self.handle_error(e.code, message, payload, exc=e)
                     except Exception as e:
                         return self.handle_error(500, message, payload, exc=e)
                         # response = handler.handle_error(e, message,
                         # request_args=args)
-            if not isinstance(response, tulip.http.Response):
+            if not isinstance(response, aiohttp.Response):
                 return self.handle_error(404, message, payload)
         else:
             return self.handle_error(404, message, payload)
@@ -61,4 +62,4 @@ class HttpServer(tulip.http.ServerHttpProtocol):
             self.keep_alive(True)
 
     def log_access(self, status, message, *args, **kw):
-        logging.debug("%s: %s", status, message.path)
+        logging.debug("%s: %s", status, message.path if message else "")

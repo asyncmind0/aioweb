@@ -9,8 +9,9 @@ from .controller import UserController
 from .model import Nutrient, Food, Meal
 from auth import User
 from . import get_routes
-import tulip
-from tulip.http import client
+import asyncio
+from aiohttp import client
+from aiohttp.test_utils import run_server
 import json
 from .importer import import_sr25_nutr_def
 
@@ -51,12 +52,12 @@ class AuthHandlerTest(CouchDBTestCase):
         self.cookies = None
 
     def test_login(self):
-        with run_test_server(self.loop, router=get_routes()) as httpd:
+        with run_server(self.loop, router=get_routes()) as httpd:
             url = httpd.url('auth', 'login')
             data = dict(username=self.test_user, password=self.test_pass)
             meth = 'post'
             r = self.loop.run_until_complete(
-                client.request(meth, url, data=data))
+                client.request(meth, url, data=data, loop=self.loop))
             content1 = self.loop.run_until_complete(r.read())
             content = content1.decode()
             resp = json.loads(content)
@@ -69,11 +70,11 @@ class AuthHandlerTest(CouchDBTestCase):
             r.close()
 
 
-class AddFoodHandlerTest(CouchDBTestCase):
+class FoodHandlerTest(CouchDBTestCase):
     def setUp(self):
-        super(AddFoodHandlerTest, self).setUp()
+        super(FoodHandlerTest, self).setUp()
         self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.handler = AddFoodHandler()
+        self.handler = FoodHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
 
@@ -88,7 +89,7 @@ class MealHandlerTest(AuthHandlerTest):
         super(MealHandlerTest, self).setUp()
         self.loop.run_until_complete(Nutrient.sync_design(self.db))
         self.loop.run_until_complete(Meal.sync_design(self.db))
-        self.handler = AddFoodHandler()
+        self.handler = FoodHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
 

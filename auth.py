@@ -1,4 +1,4 @@
-import tulip
+import asyncio
 from controller import Controller
 import http.cookies
 from uuid import uuid4
@@ -27,7 +27,7 @@ class User(Model):
 
 
 class AuthController(Controller):
-    @tulip.coroutine
+    @asyncio.coroutine
     def login(self, username, password):
         print(username)
         user = yield from User.view('by_username', self.db, key=username)

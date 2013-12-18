@@ -2,7 +2,7 @@ import unittest
 import unittest.mock
 from test import TestCase, run_test_server
 from router import Router
-from tulip.http import client
+from aiohttp import client
 from static_handler import StaticFileHandler
 
 

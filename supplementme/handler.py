@@ -5,8 +5,7 @@ from renderers import HtmlRenderer, JsonRenderer
 from .controller import (
     NutrientsController, MealController)
 from .model import Nutrient
-import tulip
-from tulip.http.protocol import http_payload_parser
+import asyncio
 from auth import AuthController, authenticated
 
 
@@ -29,7 +28,7 @@ class HomeHandler(Handler):
 class AuthHandler(Handler):
     renderer = JsonRenderer()
 
-    @tulip.coroutine
+    @asyncio.coroutine
     def __call__(self, request_args=None, **kwargs):
         controller = AuthController()
         form = self.get_form_data(True)
@@ -42,7 +41,7 @@ class AuthHandler(Handler):
 class FoodHandler(Handler):
     renderer = JsonRenderer()
 
-    @tulip.coroutine
+    @asyncio.coroutine
     def __call__(self, request_args=None, **kwargs):
         self.render(**dict(test='test'))
 
@@ -51,7 +50,7 @@ class MealHandler(Handler):
     renderer = JsonRenderer()
 
     @authenticated
-    @tulip.coroutine
+    @asyncio.coroutine
     def __call__(self, request_args=None, **kwargs):
         self.controller = MealController(session=self.session)
         result = {}
@@ -75,7 +74,7 @@ class MealHandler(Handler):
 class NutrientHandler(Handler):
     renderer = JsonRenderer()
 
-    @tulip.coroutine
+    @asyncio.coroutine
     def __call__(self, request_args=None, **kwargs):
         self.controller = NutrientsController()
         result = yield from self.controller.all()

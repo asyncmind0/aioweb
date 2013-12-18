@@ -13,26 +13,26 @@ var system = require('system');
  * @param timeOutMillis the max amount of time to wait. If not specified, 3 sec is used.
  */
 function waitFor(testFx, onReady, timeOutMillis) {
-    var maxtimeOutMillis = timeOutMillis ? timeOutMillis : 3001, //< Default Max Timeout is 3s
-        start = new Date().getTime(),
-        condition = false,
-        interval = setInterval(function() {
-            if ( (new Date().getTime() - start < maxtimeOutMillis) && !condition ) {
-                // If not time-out yet and condition not yet fulfilled
-                condition = (typeof(testFx) === "string" ? eval(testFx) : testFx()); //< defensive code
+    var maxtimeOutMillis = timeOutMillis ? timeOutMillis : 30001, //< Default Max Timeout is 3s
+    start = new Date().getTime(),
+    condition = false,
+    interval = setInterval(function() {
+        if ( (new Date().getTime() - start < maxtimeOutMillis) && !condition ) {
+            // If not time-out yet and condition not yet fulfilled
+            condition = (typeof(testFx) === "string" ? eval(testFx) : testFx()); //< defensive code
+        } else {
+            if(!condition) {
+                // If condition still not fulfilled (timeout but condition is 'false')
+                console.log("'waitFor()' timeout");
+                phantom.exit(1);
             } else {
-                if(!condition) {
-                    // If condition still not fulfilled (timeout but condition is 'false')
-                    console.log("'waitFor()' timeout");
-                    phantom.exit(1);
-                } else {
-                    // Condition fulfilled (timeout and/or condition is 'true')
-                    console.log("'waitFor()' finished in " + (new Date().getTime() - start) + "ms.");
-                    typeof(onReady) === "string" ? eval(onReady) : onReady(); //< Do what it's supposed to do once the condition is fulfilled
-                    clearInterval(interval); //< Stop this interval
-                }
+                // Condition fulfilled (timeout and/or condition is 'true')
+                console.log("'waitFor()' finished in " + (new Date().getTime() - start) + "ms.");
+                typeof(onReady) === "string" ? eval(onReady) : onReady(); //< Do what it's supposed to do once the condition is fulfilled
+                clearInterval(interval); //< Stop this interval
             }
-        }, 100); //< repeat check every 100ms
+        }
+    }, 100); //< repeat check every 100ms
 }
 
 
@@ -61,7 +61,10 @@ try{
             waitFor(function(){
                 console.log('phantom');
                 return page.evaluate(function(){
-                    return document.body.querySelector('.symbolSummary .pending') === null;
+                    //var summary= document.body.querySelector('.symbol-summary');
+                    console.log("Summary:"+window.jsApiReporter.status());
+                    //return summary !== null;
+                        return window.jsApiReporter.status() === "done";
                 });
             }, function(){
                 var exitCode = page.evaluate(function(){
@@ -73,8 +76,8 @@ try{
                         console.log(jsonString);
                         console.log("ENDSPEC");
                     });
-                    phantom.exit(exitCode);
                 });
+                    phantom.exit(exitCode);
             });
         }
     });

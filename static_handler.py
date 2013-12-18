@@ -1,6 +1,6 @@
 import os
-import tulip
-import tulip.http
+import asyncio
+import aiohttp
 import email.message
 from handler import Handler
 import mimetypes
@@ -43,14 +43,14 @@ class StaticFileHandler(Handler):
             path = path[len(self.baseurl):]
 
         if (not path.isprintable() or '/.' in path):
-            raise tulip.http.HttpStatusException(
+            raise aiohttp.HttpStatusException(
                 404, message="Bad path:%s" % path)
         else:
             filepath = path = os.path.join(self.staticroot, path)
             # self.logger.debug("staticroot:%s", os.path.join(self.staticroot,
             # path))
             if not os.path.exists(path):
-                raise tulip.http.HttpStatusException(
+                raise aiohttp.HttpStatusException(
                     404, message="Not found:%s" % path)
             else:
                 isdir = os.path.isdir(path)
@@ -61,10 +61,10 @@ class StaticFileHandler(Handler):
 
         if isdir and not path.endswith('/'):
             path = path + '/'
-            raise tulip.http.HttpStatusException(
+            raise aiohttp.HttpStatusException(
                 302, headers=(('URI', path), ('Location', path)))
 
-        response = tulip.http.Response(
+        response = aiohttp.Response(
             self.server.transport, 200, close=True)
         response.add_header('Transfer-Encoding', 'chunked')
 

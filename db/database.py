@@ -1,7 +1,7 @@
 import sys
 import json
-import tulip
-import tulip.http
+import asyncio
+import aiohttp
 from urllib.parse import quote, urlencode
 from urllib.request import urljoin
 from uuid import uuid4
@@ -86,7 +86,7 @@ class CouchDBAdapter(DatabaseAdapter):
         url = self._dburl
         if doc_id:
             url = urljoin(url, doc_id)
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'GET', url,
             headers={
                 'Accept': 'application/json'
@@ -97,7 +97,7 @@ class CouchDBAdapter(DatabaseAdapter):
     def create_db(self, dbname=None, **options):
         if not dbname:
             dbname = self._dbname
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'PUT', urljoin(self._url, dbname),
             headers={
                 'Accept': 'application/json'
@@ -108,7 +108,7 @@ class CouchDBAdapter(DatabaseAdapter):
     def delete_db(self, dbname=None, **options):
         if not dbname:
             dbname = self._dbname
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'DELETE', urljoin(self._url, dbname),
             headers={
                 'Accept': 'application/json'
@@ -132,7 +132,7 @@ class CouchDBAdapter(DatabaseAdapter):
         if not doc_id:
             doc_id = str(uuid4())
         posturl = urljoin(self._dburl, doc_id)
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'POST', self._dburl, data=json_dumps(document),
             headers={
                 'Accept': 'application/json',
@@ -146,7 +146,7 @@ class CouchDBAdapter(DatabaseAdapter):
         return Bunch(**data)
 
     def get(self, doc_id, **options):
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'GET', urljoin(self._dburl, doc_id),
             headers={
                 'Accept': 'application/json'
@@ -159,7 +159,7 @@ class CouchDBAdapter(DatabaseAdapter):
             rev = yield from self.info(doc_id)
             rev = rev._rev
         url = '%s?rev=%s' % (urljoin(self._dburl, doc_id), quote(rev))
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'DELETE', url,
             headers={
                 'Accept': 'application/json'
@@ -168,7 +168,7 @@ class CouchDBAdapter(DatabaseAdapter):
         return Bunch(**json_loads(data))
 
     def all(self, **options):
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'GET', urljoin(self._dburl, '_all_docs'),
             headers={
                 'Accept': 'application/json'
@@ -178,7 +178,7 @@ class CouchDBAdapter(DatabaseAdapter):
 
     def put_design_doc(self, ddoc_name, ddoc, **options):
         posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'PUT', posturl, data=json_dumps(ddoc),
             headers={
                 'Accept': 'application/json',
@@ -189,7 +189,7 @@ class CouchDBAdapter(DatabaseAdapter):
 
     def get_design_doc(self, ddoc_name, **options):
         posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'GET', posturl,
             headers={
                 'Accept': 'application/json',
@@ -203,7 +203,7 @@ class CouchDBAdapter(DatabaseAdapter):
             rev = rev._rev
         posturl = urljoin(self._dburl, "_design/%s/" % ddoc_name)
         url = '%s?rev=%s' % (posturl, quote(rev))
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'DELETE', url,
             headers={
                 'Accept': 'application/json'
@@ -225,7 +225,7 @@ class CouchDBAdapter(DatabaseAdapter):
         query = urlencode(options)
         viewurl = "%s?%s" % (viewurl, query)
         self.logger.debug('GET: %s', viewurl)
-        response = yield from tulip.http.request(
+        response = yield from aiohttp.request(
             'GET', viewurl,
             headers={
                 'Accept': 'application/json',

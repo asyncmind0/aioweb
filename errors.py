@@ -1,10 +1,11 @@
 from debug import pprint, shell, profile, debug as sj_debug
 import logging
+import aiohttp
 
 class ErrorHandlerMixin():
     def _write_headers(self):
         headers = email.message.Message()
-        response = tulip.http.Response(
+        response = aiohttp.Response(
             self.server.transport, 200, close=True)
         response.add_header('Transfer-Encoding', 'chunked')
 
@@ -29,7 +30,7 @@ class ErrorHandlerMixin():
     def handle_error(self, exception, message, request_args=None):
         """Default handler exception handler"""
         sj_debug() ###############################################################
-        if isinstance(exception, tulip.http.errors.HttpStatusException):
+        if isinstance(exception, aiohttp.errors.HttpStatusException):
             if hasattr(self, 'handle_%s' % exception.code):
                 response = getattr(self, 'handle_%s' % exception.code)(
                     exception, message, request_args)

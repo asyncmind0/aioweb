@@ -1,4 +1,4 @@
-import tulip
+import asyncio
 from controller import Controller
 from .model import Food, Nutrient, Meal
 from auth import User
@@ -60,25 +60,25 @@ class FoodController(Controller):
 
 
 class MealController(Controller):
-    @tulip.coroutine
+    @asyncio.coroutine
     def all_meals(self):
         meals = yield from Meal.all(self.db)
         return meals
 
-    @tulip.coroutine
+    @asyncio.coroutine
     def add_meal(self, meal):
         meal = Meal(**meal)
         save = yield from meal.save(self.db)
         return save
 
-    @tulip.coroutine
+    @asyncio.coroutine
     def search_meals(self):
         meals = yield from Meal.view('by_user', self.db, key=self.session.user._id)
         return meals
 
 
 class UserController(Controller):
-    @tulip.coroutine
+    @asyncio.coroutine
     def add_user(self, user):
         user = User(**user)
         save = yield from user.save(self.db)

@@ -1,11 +1,10 @@
-from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import os
 import sys
 import json
 
-import tulip
-from tulip import streams
-from tulip import protocols
+import asyncio
+from asyncio import streams
+from asyncio import protocols
 
 from subprocess import Popen, PIPE
 from test import TestCase, run_test_server, CouchDBTestCase
@@ -16,7 +15,7 @@ from static_handler import get_routes as get_static_routes
 from .importer import import_sr25_nutr_def
 
 def connect_write_pipe(file):
-    loop = tulip.get_event_loop()
+    loop = asyncio.get_event_loop()
     protocol = protocols.Protocol()
     return loop._make_write_pipe_transport(file, protocol)
 
@@ -26,7 +25,7 @@ def connect_write_pipe(file):
 
 
 def connect_read_pipe(file):
-    loop = tulip.get_event_loop()
+    loop = asyncio.get_event_loop()
     stream_reader = streams.StreamReader()
     protocol = _StreamReaderProtocol(stream_reader)
     transport = loop._make_read_pipe_transport(file, protocol)
@@ -66,13 +65,13 @@ class FunctionalTests(CouchDBTestCase):
 
         # interact with subprocess
         name = {stdout: 'OUT', stderr: 'ERR'}
-        registered = {tulip.Task(stderr.readline()): stderr,
-                      tulip.Task(stdout.readline()): stdout}
+        registered = {asyncio.Task(stderr.readline()): stderr,
+                      asyncio.Task(stdout.readline()): stdout}
         timeout = None
         res = None
         while registered:
-            done, pending = yield from tulip.wait(
-                registered, timeout=timeout, return_when=tulip.FIRST_COMPLETED)
+            done, pending = yield from asyncio.wait(
+                registered, timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
             if not done:
                 break
             for f in done:
@@ -80,7 +79,7 @@ class FunctionalTests(CouchDBTestCase):
                 res = f.result()
                 output.append(res.decode('utf8').rstrip())
                 if res != b'':
-                    registered[tulip.Task(stream.readline())] = stream
+                    registered[asyncio.Task(stream.readline())] = stream
             timeout = 5.0
         return output
 
@@ -93,7 +92,6 @@ class FunctionalTests(CouchDBTestCase):
             url = httpd.url("/")
             print(url)
             meth = 'get'
-            sj_debug() ###############################################################
             r = self.loop.run_until_complete(
                 self._run_phantom(url))
             spec = []
@@ -122,5 +120,4 @@ class FunctionalTests(CouchDBTestCase):
             meth = 'get'
             ghost = Ghost()
             page, extra_resources = ghost.open(url)
-            sj_debug() ###############################################################
             assert page.http_status == 200 

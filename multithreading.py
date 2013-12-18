@@ -3,17 +3,17 @@ import socket
 import signal
 import time
 import logging
-import tulip
-import tulip.http
-from tulip.http import websocket
+import asyncio
+import aiohttp
+from aiohttp import websocket, parsers
 import threading
 import time
-import tulip
+import asyncio
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler, FileSystemEventHandler
 
 
-class MyStreamProtocol(tulip.StreamProtocol):
+class MyStreamProtocol(parsers.StreamProtocol):
     """Override to handle disconnection gracefully"""
     def connection_lost(self, exc):
         self.transport = None
@@ -22,7 +22,7 @@ class MyStreamProtocol(tulip.StreamProtocol):
             self.set_exception(exc)
         else:
             if not self._parser_buffer or \
-               self._parser_buffer._waiter._state != tulip.futures._PENDING:
+               self._parser_buffer._waiter._state != asyncio.futures._PENDING:
                 return
             self.feed_eof()
 
@@ -40,27 +40,28 @@ class ChildProcess:
 
     def start(self):
         # start server
-        self.loop = loop = tulip.new_event_loop()
-        tulip.set_event_loop(loop)
+        self.loop = loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
         def stop():
             self.loop.stop()
             os._exit(0)
         loop.add_signal_handler(signal.SIGINT, stop)
 
-        f = loop.start_serving(
+        f = loop.create_server(
             self.protocol_factory, sock=self.sock, ssl=self.ssl)
-        x = loop.run_until_complete(f)[0]
+        srv = loop.run_until_complete(f)
+        x = srv.sockets[0]
         self.logger.info('Starting srv worker process {} on {}'.format(
             os.getpid(), x.getsockname()))
 
         # heartbeat
-        self.heartbeat()
+        asyncio.async(self.heartbeat())
 
-        tulip.get_event_loop().run_forever()
+        asyncio.get_event_loop().run_forever()
         os._exit(0)
 
-    @tulip.task
+    @asyncio.coroutine
     def heartbeat(self):
         # setup pipes
         read_transport, read_proto = yield from self.loop.connect_read_pipe(
@@ -68,7 +69,7 @@ class ChildProcess:
         write_transport, _ = yield from self.loop.connect_write_pipe(
             MyStreamProtocol, os.fdopen(self.down_write, 'wb'))
 
-        reader = read_proto.set_parser(websocket.WebSocketParser())
+        reader = read_proto.set_parser(websocket.WebSocketParser)
         writer = websocket.WebSocketWriter(write_transport)
 
         while True:
@@ -126,7 +127,7 @@ class Worker:
             os.close(down_read)
 
             # cleanup after fork
-            tulip.set_event_loop(None)
+            asyncio.set_event_loop(None)
 
             # setup process
             process = ChildProcess(
@@ -134,11 +135,11 @@ class Worker:
                 self.ssl)
             process.start()
 
-    @tulip.task
+    @asyncio.coroutine
     def heartbeat(self, writer):
         global debugging
         while True:
-            yield from tulip.sleep(15)
+            yield from asyncio.sleep(15)
             if self.shutdown or self.restart:
                 self.logger.info(
                     'Restarting/Shutting worker process: {}'.format(self.pid))
@@ -158,7 +159,7 @@ class Worker:
                 self.start()
                 return
 
-    @tulip.task
+    @asyncio.coroutine
     def chat(self, reader, proto):
         while True:
             msg = yield from reader.read()
@@ -175,7 +176,7 @@ class Worker:
             elif msg.tp == websocket.MSG_PONG:
                 self.ping = time.monotonic()
 
-    @tulip.task
+    @asyncio.coroutine
     def connect(self, pid, up_write, down_read):
         # setup pipes
         read_transport, proto = yield from self.loop.connect_read_pipe(
@@ -210,7 +211,7 @@ class Worker:
 class Superviser:
 
     def __init__(self, args):
-        self.loop = tulip.get_event_loop()
+        self.loop = asyncio.get_event_loop()
         self.args = args
         self.workers = []
         self.logger = logging.getLogger(self.__class__.__name__)

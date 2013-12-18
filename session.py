@@ -1,5 +1,3 @@
-import tulip
-import http.cookies
 from uuid import uuid4
 
 

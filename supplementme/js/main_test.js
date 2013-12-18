@@ -1,17 +1,16 @@
 require([
     "dojo/ready",
     "dojo/query",
+    "dijit/registry",
+    "dojo/_base/array",
     "supplementme/main"
-], function (ready, query) {
+], function (ready, query, registry, array) {
     ready(function () {
         describe("meal widget", function(){
             it("should be visible",
                function(){
                    expect(query('.meals-widget').length).toEqual(1);
-                   expect(query('meal-select > option').length).toBeGreaterThan(1);
                });
-        });
-        describe("on clicking add", function(){
             it("should add selected meal to list of meals",
                function(){
                });
@@ -22,19 +21,22 @@ require([
                });
         });
         describe("food widget", function(){
-            it("should be visible",
-               function(){
+            var foodWidgetDomNode = query('.food-widget')[0];
+            var foodWidget = registry.byId(dojo.attr(foodWidgetDomNode, 'widgetid'));
+            var nutrientStore = foodWidget.nutrientStore;
+            beforeEach(function(done) {
+                setTimeout(function() {
+                    done();
+                }, 100);
+            });
+            it("should be visible", function(done){
                    expect(query('.food-widget').length).toEqual(1);
-                   expect(query('meal-select > option').length).toBeGreaterThan(1);
+                done();
                });
-            it("should have nutrients store loaded",
-               function(){
-                   var foodWidget = dijit.query('.food-widget')[0];
-                   var nutrientStore = foodWidget.nutrientStore;
+            it("should have nutrients store loaded",function(done){
                    expect(nutrientStore.data.length).toBeGreaterThan(0);
-                   //expect(query('.nutrients-select').length).toEqual(1);
-                   //expect(query('nutrients-select > option').length).toBeGreaterThan(1);
-               });
+                done();
+            });
         });
     });
 });

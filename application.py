@@ -15,8 +15,7 @@ except ImportError:  # pragma: no cover
 
 assert sys.version >= '3.3', 'Please use Python 3.3 or higher.'
 
-import tulip
-import tulip.http
+import asyncio
 
 from urllib.parse import urlparse
 
@@ -57,7 +56,7 @@ ARGS.add_argument(
 def configure_logging():
     #logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     logging.getLogger().level= logging.DEBUG
-    logging.getLogger('tulip').level= logging.ERROR
+    logging.getLogger('asyncio').level= logging.ERROR
 
 
 def main():
@@ -69,11 +68,11 @@ def main():
         args.port = int(port)
 
     if args.iocp:
-        from tulip import windows_events
+        from asyncio import windows_events
         sys.argv.remove('--iocp')
         logging.info('using iocp')
         el = windows_events.ProactorEventLoop()
-        tulip.set_event_loop(el)
+        asyncio.set_event_loop(el)
 
     if args.ssl:
         here = os.path.join(os.path.dirname(__file__), 'tests')

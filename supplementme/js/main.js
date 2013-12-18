@@ -61,11 +61,11 @@ require([
                     });
                     this.nutrientStore = new Memory();
                     this.nutrientStoreCache = new Cache(nutrientStore, this.nutrientStore);
+                    this.nutrientStoreCache.query({id:""});
                 },
                 startup: function (){
                     this.inherited(arguments);
                     // load cache
-                    this.nutrientStoreCache.query({id:""});
                     var filteringSelect = new FilteringSelect({
                         store: this.nutrientStore,
                     }, this.nutrientsSelect);

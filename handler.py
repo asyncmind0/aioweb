@@ -1,6 +1,6 @@
 from debug import pprint, pprintxml, shell, profile, debug as sj_debug
-import tulip
-import tulip.http
+import asyncio
+import aiohttp
 import email.message
 from urllib.parse import urlparse
 import cgi
@@ -9,7 +9,6 @@ import logging
 import email.parser
 import io
 import urllib
-import json
 import http.cookies
 
 
@@ -24,7 +23,7 @@ class Handler(ErrorHandlerMixin):
     def initialize(self, server, message, payload, prev_response=None):
         self.server = server
         self.request = message
-        self.body = yield from payload.read()
+        self.body = payload
         self.headers = dict(self.request.headers)
         self._cookie = http.cookies.SimpleCookie(self.headers.get('COOKIE'))
         self.prev_response = prev_response
@@ -81,7 +80,7 @@ class Handler(ErrorHandlerMixin):
 
     def _write_headers(self):
         headers = email.message.Message()
-        response = tulip.http.Response(
+        response = aiohttp.Response(
             self.server.transport, 200, close=True)
         response.add_header('Transfer-Encoding', 'chunked')
 
