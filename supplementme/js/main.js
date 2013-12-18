@@ -77,6 +77,9 @@ require([
                 },
                 onAddFood: function(e){
                     console.log('onAddFood');
+                },
+                onAddNutrient: function(e){
+                    console.log(this.nutrientsSelect.value);
                 }
             });
 

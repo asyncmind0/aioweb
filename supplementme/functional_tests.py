@@ -88,11 +88,12 @@ class FunctionalTests(CouchDBTestCase):
         import logging
         logging.basicConfig(level=logging.DEBUG)
         router = get_static_routes()
-        router.add_handler('/', get_routes(db=self.db))
+        router.add_handler('/', get_routes())
         with run_test_server(self.loop, router=router, port=9999) as httpd:
             url = httpd.url("/")
             print(url)
             meth = 'get'
+            sj_debug() ###############################################################
             r = self.loop.run_until_complete(
                 self._run_phantom(url))
             spec = []
@@ -114,7 +115,7 @@ class FunctionalTests(CouchDBTestCase):
         import logging
         logging.basicConfig(level=logging.DEBUG)
         router = get_static_routes()
-        router.add_handler('/', get_routes(db=self.db))
+        router.add_handler('/', get_routes())
         with run_test_server(self.loop, router=router, port=9999) as httpd:
             url = httpd.url("/")
             print(url)

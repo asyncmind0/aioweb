@@ -27,10 +27,13 @@ require([
                    expect(query('.food-widget').length).toEqual(1);
                    expect(query('meal-select > option').length).toBeGreaterThan(1);
                });
-            it("should have nutrients dropdown",
+            it("should have nutrients store loaded",
                function(){
-                   expect(query('.nutrients-select').length).toEqual(1);
-                   expect(query('nutrients-select > option').length).toBeGreaterThan(1);
+                   var foodWidget = dijit.query('.food-widget')[0];
+                   var nutrientStore = foodWidget.nutrientStore;
+                   expect(nutrientStore.data.length).toBeGreaterThan(0);
+                   //expect(query('.nutrients-select').length).toEqual(1);
+                   //expect(query('nutrients-select > option').length).toBeGreaterThan(1);
                });
         });
     });
