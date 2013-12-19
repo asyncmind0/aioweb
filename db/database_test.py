@@ -1,4 +1,3 @@
-from tulip import test_utils
 from test import CouchDBTestCase
 
 

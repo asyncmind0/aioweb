@@ -38,7 +38,7 @@ class HtmlRenderer(object):
 
 
 class JsonRenderer():
-    def render(self, data, **kwargs):
-        if data:
-            return json_dumps(data).encode()
+    def render(self, *args, **kwargs):
+        if args:
+            return json_dumps(args[0]).encode()
         return json_dumps(kwargs).encode()

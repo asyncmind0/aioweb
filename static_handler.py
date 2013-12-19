@@ -20,7 +20,7 @@ def get_routes(router=None):
     router.add_handler('/dijit/', StaticFileHandler,
                        dict(staticroot=join(dirname(__file__), 'static', 'dojo')))
     router.add_handler(
-        '/jasmine/', StaticFileHandler, 
+        '/jasmine/', StaticFileHandler,
         dict(staticroot=join(dirname(__file__), 'static',
                              config['default']['jasmine']),
              baseurl='/jasmine/'))

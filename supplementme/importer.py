@@ -1,4 +1,5 @@
 import csv
+import logging
 from .model import Nutrient
 
 
@@ -19,11 +20,12 @@ def import_sr25_nutr_def(db, loop):
 
     """
     with open('data/sr25/NUTR_DEF.txt', 'r', encoding='iso-8859-1') as datafile:
+        logger = logging.getLogger("importer")
         reader = csv.reader(datafile, delimiter='^')
         for row in reader:
             row = [col[1:-1] for col in row]
             if not row[2]:
-                print("Skipping: %s" % str(row))
+                logger.debug("Skipping: %s" % str(row))
                 continue
             nutrient = Nutrient(name=row[3], tag=row[2], unit=row[1],
                                 number=row[0], decimal_places=row[4])

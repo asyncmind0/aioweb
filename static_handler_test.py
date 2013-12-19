@@ -10,12 +10,13 @@ class StaticFileHandlerTest(TestCase):
     def setUp(self):
         super(StaticFileHandlerTest, self).setUp()
         self.transport = unittest.mock.Mock()
-        self.handler = StaticFileHandler("static", baseurl="/static/")
+        self.handler = StaticFileHandler
         self.handler.response = self.transport
 
     def test_static_file(self):
         router = Router()
-        router.add_handler("/static/(.*)$", self.handler)
+        router.add_handler("/static/(.*)$", self.handler, 
+                           dict(staticroot="static", baseurl="/static/"))
         with run_test_server(self.loop, router=router) as httpd:
             url = httpd.url('static', 'test.js')
             meth = 'get'

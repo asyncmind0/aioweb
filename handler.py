@@ -1,4 +1,3 @@
-from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import asyncio
 import aiohttp
 import email.message
@@ -40,7 +39,8 @@ class Handler(ErrorHandlerMixin):
 
         # application/x-www-form-urlencoded
         if ct == 'application/x-www-form-urlencoded':
-            resp['form'] = urllib.parse.parse_qs(self.body.decode('latin1'))
+            body = yield from self.body.read()
+            resp['form'] = urllib.parse.parse_qs(body.decode('latin1'))
 
         # multipart/form-data
         elif ct.startswith('multipart/form-data'):  # pragma: no cover

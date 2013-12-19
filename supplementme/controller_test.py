@@ -70,9 +70,9 @@ class AuthControllerTest (CouchDBTestCase):
 class FoodControllerTest (AuthControllerTest):
     def setUp(self):
         super(FoodControllerTest, self).setUp()
-        self.controller = FoodController(self.db)
-        import_sr25_nutr_def(self.db, self.loop)
         self.test_login()
+        self.controller = FoodController(self.db, session=self.session)
+        import_sr25_nutr_def(self.db, self.loop)
 
     def test_add_food(self):
         food = dict(name="somefood",
@@ -80,8 +80,8 @@ class FoodControllerTest (AuthControllerTest):
                                dict(tag='BETN', quantity=20)],
                     serving_size=200,
                     unit='mg')
-        r = self.loop.run_until_complete(food.save(self.db))
-        assert hasattr(r, 'ok') and r.ok is True, str(r)
+        food = self.loop.run_until_complete(self.controller.add_update_food(food))
+        assert hasattr(food, '_id') and food.name == "somefood", str(food)
 
     def test_update_food(self):
         food = dict(name="somefood",
@@ -89,12 +89,10 @@ class FoodControllerTest (AuthControllerTest):
                                dict(tag='ASH', quantity=20)],
                     serving_size=300,
                     unit='mg')
-        r = self.loop.run_until_complete(
+        food = self.loop.run_until_complete(
             self.controller.add_update_food(food))
-        assert hasattr(r, 'ok') and r.ok is True, str(r)
-        r = self.loop.run_until_complete(Food.get(r.id, self.db))
-        assert r.name == 'somefood'
-        assert hasattr(r, 'serving_size') and r.serving_size == 300, str(r)
+        assert hasattr(food, '_id') and food.name == "somefood", str(food)
+        assert hasattr(food, 'serving_size') and food.serving_size == 300, str(food)
 
     def test_all(self):
         self.test_add_food()
@@ -108,15 +106,20 @@ class FoodControllerTest (AuthControllerTest):
 class MealControllerTest (AuthControllerTest):
     def setUp(self):
         super(MealControllerTest, self).setUp()
+        import_sr25_nutr_def(self.db, self.loop)
         self.test_login()
+        self.controller = MealController(session=self.session)
+        self.food_controller = FoodController(session=self.session)
 
     def test_add_meal(self):
-        food = Food(name="somefood",
-                    nutrients=[['vitamin_c', 10], ['vitamin_d', 20]],
+        food = dict(name="somefood",
+                    nutrients=[dict(tag='ALC', quantity=10),
+                               dict(tag='ASH', quantity=20)],
                     serving_size=300,
                     unit='mg')
-        r = self.loop.run_until_complete(food.save(self.db))
-        assert hasattr(r, 'ok') and r.ok is True, str(r)
+        food = self.loop.run_until_complete(
+            self.food_controller.add_update_food(food))
+        assert hasattr(food, '_id') and food.name == "somefood", str(food)
         meal = dict(foods=[food._id], quantity='200g', user=self.userid)
         r = self.loop.run_until_complete(self.controller.add_meal(meal))
         assert hasattr(r, 'ok') and r.ok is True, str(r)

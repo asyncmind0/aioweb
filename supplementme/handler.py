@@ -31,7 +31,7 @@ class AuthHandler(Handler):
     @asyncio.coroutine
     def __call__(self, request_args=None, **kwargs):
         controller = AuthController()
-        form = self.get_form_data(True)
+        form = yield from self.get_form_data(True)
         session = yield from controller.login(
             form['username'].pop(), form['password'].pop())
         self.cookies = dict(userid=session.user._id, sessionid=session.id)
@@ -61,7 +61,7 @@ class MealHandler(Handler):
         self.render(**result)
 
     def add_meal(self):
-        form = self.get_form_data(True)
+        form = yield from self.get_form_data(True)
         form['user'] = self.session.user._id
         result = yield from self.controller.add_meal(form)
         return result.__dict__

@@ -5,6 +5,7 @@ from auth import User
 import http.cookies
 from uuid import uuid4
 from session import Session
+from auth import authenticated
 
 
 class NutrientsController(Controller):
@@ -56,7 +57,7 @@ class FoodController(Controller):
             food = old_food
 
         r = yield from food.save(self.db)
-        return r
+        return food
 
 
 class MealController(Controller):

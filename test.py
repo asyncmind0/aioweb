@@ -7,7 +7,7 @@ from db.database import CouchDBAdapter
 
 import asyncio
 from aiohttp import test_utils
-from config import config
+from config import set_config
 import logging
 import contextlib
 import threading
@@ -17,8 +17,17 @@ from debug import set_except_hook
 from nose.tools import nottest
 
 
+def run_briefly(loop):
+    @asyncio.coroutine
+    def once():
+        pass
+    t = asyncio.Task(once(), loop=loop)
+    loop.run_until_complete(t)
+
+
 class TestCase(unittest.TestCase):
     def setUp(self):
+        set_config('testing')
         set_except_hook()
         logging.getLogger('asyncio').level = logging.ERROR
         self.loop = asyncio.new_event_loop()
@@ -37,9 +46,10 @@ class CouchDBTestCase(TestCase):
 
     def setUp(self):
         super(CouchDBTestCase, self).setUp()
+        from config import config
         self.db = CouchDBAdapter(
             'http://%(username)s:%(password)s@localhost:5984/' %
-            config['couchdb'], self.database)
+            config['couchdb'], config['couchdb']['database'])
 
     def tearDown(self):
         r = self.loop.run_until_complete(self.db.delete_db())
@@ -86,10 +96,11 @@ def run_test_server(loop, *, host='127.0.0.1', port=0,
         thread_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(thread_loop)
 
-        socks = thread_loop.run_until_complete(
-            thread_loop.start_serving(
+        server = thread_loop.run_until_complete(
+            thread_loop.create_server(
                 lambda: AppServer(router, keep_alive=0.5),
                 host, port, ssl=sslcontext))
+        socks = server.sockets
 
         waiter = asyncio.Future()
         loop.call_soon_threadsafe(

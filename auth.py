@@ -29,7 +29,6 @@ class User(Model):
 class AuthController(Controller):
     @asyncio.coroutine
     def login(self, username, password):
-        print(username)
         user = yield from User.view('by_username', self.db, key=username)
         user = user.first()
         return Session.start_session(user)

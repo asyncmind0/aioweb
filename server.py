@@ -45,7 +45,7 @@ class HttpServer(server.ServerHttpProtocol):
                             response = yield from response
                         if not isinstance(response, aiohttp.Response):
                             response = handler.response
-                    except aiohttp.errors.HttpStatusException as e:
+                    except aiohttp.errors.HttpException as e:
                         self.logger.debug("%s: %s", e.code, e.message)
                         return self.handle_error(e.code, message, payload, exc=e)
                     except Exception as e:
