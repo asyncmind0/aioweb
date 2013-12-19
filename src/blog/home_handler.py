@@ -1,11 +1,11 @@
-import tulip
-import tulip.http
 from handler import Handler
 from renderers import HtmlRenderer
 from controller import HomeController
 
+
 class HomeHandler(Handler):
     renderer = HtmlRenderer()
+
     def __call__(self, request_args=None):
         controller = HomeController()
         query = controller.store_query(self.query)

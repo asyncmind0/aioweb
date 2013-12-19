@@ -1,4 +1,4 @@
-#TULIPSERVER -*- mode: org -*-
+#AIOWEB -*- mode: org -*-
 #+STARTUP: hidestars, content
 ** TODO make app phonegap ready/dojo mobile
 ** TODO write python unittests 
