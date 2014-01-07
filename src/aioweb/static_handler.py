@@ -1,7 +1,7 @@
 import os
 import aiohttp
 import email.message
-from handler import Handler
+from aioweb.handler import Handler
 import mimetypes
 
 

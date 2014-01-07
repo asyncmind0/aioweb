@@ -10,5 +10,5 @@ class HomeHandler(Handler):
         controller = HomeController()
         query = controller.store_query(self.query)
         posts = controller.get_all_posts()
-        self.render('home', query=[{'key': key, 'value': value} 
+        self.render('home', query=[{'key': key, 'value': value}
                                    for key, value in query.items()])

@@ -11,7 +11,7 @@ import asyncio
 from aiohttp import server
 import aiohttp
 import cgi
-from errors import ErrorHandlerMixin
+from aioweb.errors import ErrorHandlerMixin
 
 
 class HttpServer(server.ServerHttpProtocol):

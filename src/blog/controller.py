@@ -1,5 +1,6 @@
-from controller import Controller
+from aioweb.controller import Controller
 from datetime import datetime
+
 
 class HomeController(Controller):
     def __init__(self, db, post_source='post', comment_source='comment', 

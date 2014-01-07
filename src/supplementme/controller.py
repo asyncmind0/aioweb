@@ -1,11 +1,10 @@
 import asyncio
-from controller import Controller
+from aioweb.controller import Controller
 from .model import Food, Nutrient, Meal
-from auth import User
+from aioweb.auth import User, authenticated
 import http.cookies
 from uuid import uuid4
-from session import Session
-from auth import authenticated
+from aioweb.session import Session
 
 
 class NutrientsController(Controller):

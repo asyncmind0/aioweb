@@ -1,12 +1,12 @@
 import os
 import logging
-from handler import Handler
-from renderers import HtmlRenderer, JsonRenderer
+from aioweb.handler import Handler
+from aioweb.renderers import HtmlRenderer, JsonRenderer
 from .controller import (
     NutrientsController, MealController)
 from .model import Nutrient
 import asyncio
-from auth import AuthController, authenticated
+from aioweb.auth import AuthController, authenticated
 
 
 class HomeHandler(Handler):

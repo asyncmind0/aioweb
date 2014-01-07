@@ -3,7 +3,7 @@ import aiohttp
 import email.message
 from urllib.parse import urlparse
 import cgi
-from errors import ErrorHandlerMixin
+from aioweb.errors import ErrorHandlerMixin
 import logging
 import email.parser
 import io

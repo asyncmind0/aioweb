@@ -1,9 +1,9 @@
 import unittest
 import unittest.mock
-from test import TestCase, run_test_server
-from router import Router
+from aioweb.test import TestCase, run_test_server
+from aioweb.router import Router
 from aiohttp import client
-from static_handler import StaticFileHandler
+from aioweb.static_handler import StaticFileHandler
 
 
 class StaticFileHandlerTest(TestCase):

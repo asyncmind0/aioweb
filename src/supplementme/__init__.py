@@ -1,8 +1,8 @@
 from os.path import join, dirname
-from static_handler import StaticFileHandler
+from aioweb.static_handler import StaticFileHandler
+from aioweb.router import Router
 from .handler import (
     HomeHandler, FoodHandler, MealHandler, AuthHandler, NutrientHandler)
-from router import Router
 
 
 def get_routes():

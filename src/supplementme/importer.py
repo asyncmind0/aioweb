@@ -1,6 +1,8 @@
+import os
 import csv
 import logging
 from .model import Nutrient
+from aioweb.config import config
 
 
 def import_sr25_nutr_def(db, loop):
@@ -19,7 +21,9 @@ def import_sr25_nutr_def(db, loop):
         various reports produced from SR.
 
     """
-    with open('data/sr25/NUTR_DEF.txt', 'r', encoding='iso-8859-1') as datafile:
+    data_path = os.path.join(os.path.dirname(__file__),
+                             'data/sr25/NUTR_DEF.txt')
+    with open(data_path, 'r', encoding='iso-8859-1') as datafile:
         logger = logging.getLogger("importer")
         reader = csv.reader(datafile, delimiter='^')
         for row in reader:

@@ -1,16 +1,17 @@
+import os
 import unittest
 import unittest.mock
-from test import CouchDBTestCase
-from test import TestCase, run_test_server
+from aioweb.test import CouchDBTestCase
+from aioweb.test import run_test_server as run_server
+from .test import TestCase
 from .handler import (HomeHandler, FoodHandler, MealHandler, AuthHandler,
                       NutrientHandler)
 from .controller import UserController
 from .model import Nutrient, Food, Meal
-from auth import User
+from aioweb.auth import User
 from . import get_routes
 import asyncio
 from aiohttp import client, server
-from test import run_test_server as run_server
 import json
 from .importer import import_sr25_nutr_def
 
@@ -94,7 +95,7 @@ class MealHandlerTest(AuthHandlerTest):
         self.test_login()
 
     def test_add_meal(self):
-        with run_test_server(self.loop, router=get_routes()) as httpd:
+        with run_server(self.loop, router=get_routes()) as httpd:
             url = httpd.url('meal', 'add')
             meth = 'post'
             food = dict(name="somefood",
@@ -114,7 +115,7 @@ class MealHandlerTest(AuthHandlerTest):
 
     def test_search_meal(self):
         self.test_add_meal()
-        with run_test_server(self.loop, router=get_routes()) as httpd:
+        with run_server(self.loop, router=get_routes()) as httpd:
             url = httpd.url('meal')
             params = (('query', 'name'),)
             meth = 'get'
@@ -145,7 +146,7 @@ class NutrientHandlerTest(AuthHandlerTest):
 
     def test_list_nutrients(self):
         self.test_login()
-        with run_test_server(self.loop, router=get_routes()) as httpd:
+        with run_server(self.loop, router=get_routes()) as httpd:
             url = httpd.url('nutrients')
             params = (('query', 'name'),)
             meth = 'get'

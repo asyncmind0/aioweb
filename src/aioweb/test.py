@@ -1,17 +1,18 @@
 #!/usr/bin/python3
-from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import unittest
+
+
 import unittest.mock
 import gc
-from db.database import CouchDBAdapter
+import os
+from aioweb.db.database import CouchDBAdapter
 
 import asyncio
 from aiohttp import test_utils
-from config import set_config
 import logging
 import contextlib
 import threading
-from server import HttpServer as AppServer
+from aioweb.server import HttpServer as AppServer
 import urllib.parse
 from debug import set_except_hook
 from nose.tools import nottest
@@ -26,9 +27,13 @@ def run_briefly(loop):
 
 
 class TestCase(unittest.TestCase):
+    config_name = "testing"
+    base_path = os.path.dirname(__file__)
+
     def setUp(self):
-        set_config('testing')
         set_except_hook()
+        from aioweb.config import set_config
+        self.config = set_config(self.base_path, self.config_name)
         logging.getLogger('asyncio').level = logging.ERROR
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -46,10 +51,9 @@ class CouchDBTestCase(TestCase):
 
     def setUp(self):
         super(CouchDBTestCase, self).setUp()
-        from config import config
         self.db = CouchDBAdapter(
             'http://%(username)s:%(password)s@localhost:5984/' %
-            config['couchdb'], config['couchdb']['database'])
+            self.config['couchdb'], self.config['couchdb']['database'])
 
     def tearDown(self):
         r = self.loop.run_until_complete(self.db.delete_db())
@@ -137,5 +141,4 @@ def run_test_server(loop, *, host='127.0.0.1', port=0,
 
 def __main__():
     import nose
-    sj_debug() ###############################################################
     nose.run(argv=sys.argv+['-s'])

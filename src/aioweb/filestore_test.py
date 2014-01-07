@@ -2,9 +2,12 @@ import os
 from os.path import join
 import unittest
 import shutil
-from filestore import FileStore
+from aioweb.filestore import FileStore
 from loremipsum import generate_sentence, generate_paragraph
+from nose.tools import nottest
 
+
+@nottest
 class FileStoreTest(unittest.TestCase):
     def setUp(self):
         self.testdir = "/tmp/filestoretest/"

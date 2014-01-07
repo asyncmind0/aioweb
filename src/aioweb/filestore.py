@@ -2,6 +2,7 @@ import os
 from os.path import join
 import glob
 
+
 class FileStore():
     def __init__(self, path, extensions=["*.rst"]):
         self.path = path

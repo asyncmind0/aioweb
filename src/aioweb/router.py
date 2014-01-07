@@ -1,6 +1,6 @@
 import re
 import collections
-from errors import ErrorHandlerMixin
+from aioweb.errors import ErrorHandlerMixin
 import sys
 import importlib
 import imp

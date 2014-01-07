@@ -1,10 +1,10 @@
-from test import CouchDBTestCase
+from aioweb.test import CouchDBTestCase
 from .controller import (
     NutrientsController, FoodController, MealController,
     UserController)
 from .model import Nutrient, Food, Meal
-from auth import User, AuthController
-from session import Session
+from aioweb.auth import User, AuthController
+from aioweb.session import Session
 from .importer import import_sr25_nutr_def
 
 

@@ -1,5 +1,5 @@
 import json
-from db.model_codecs import json_dumps
+from aioweb.db.model_codecs import json_dumps
 import pystache
 
 

@@ -1,9 +1,9 @@
 import asyncio
-from controller import Controller
+from aioweb.controller import Controller
 import http.cookies
 from uuid import uuid4
-from db.model import Model
-from session import Session
+from aioweb.db.model import Model
+from aioweb.session import Session
 
 
 class User(Model):

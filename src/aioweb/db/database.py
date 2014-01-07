@@ -64,9 +64,10 @@ class ResultList(Bunch):
             return self.__dict__['rows'][-1]['value']
         return None
 
-        
+
 class CouchDBError(Exception):
     pass
+
 
 class DatabaseAdapter:
     pass

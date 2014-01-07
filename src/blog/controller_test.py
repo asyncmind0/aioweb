@@ -2,7 +2,7 @@ from .controller import HomeController
 from .model import Post
 from loremipsum import generate_sentence, generate_paragraph
 from datetime import datetime
-from test import CouchDBTestCase
+from aioweb.test import CouchDBTestCase
 
 
 class ControllerTest(CouchDBTestCase):

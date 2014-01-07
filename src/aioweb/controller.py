@@ -1,4 +1,4 @@
-from db import get_db
+from aioweb.db import get_db
 
 
 class Controller():
