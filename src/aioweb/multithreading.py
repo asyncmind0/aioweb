@@ -49,7 +49,7 @@ class ChildProcess:
         loop.add_signal_handler(signal.SIGINT, stop)
 
         f = loop.create_server(
-            self.protocol_factory, sock=self.sock, ssl=self.ssl)
+            self.protocol_factory(), sock=self.sock, ssl=self.ssl)
         srv = loop.run_until_complete(f)
         x = srv.sockets[0]
         self.logger.info('Starting srv worker process {} on {}'.format(

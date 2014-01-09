@@ -7,11 +7,11 @@ from asyncio import streams
 from asyncio import protocols
 
 from subprocess import Popen, PIPE
-from test import TestCase, run_test_server, CouchDBTestCase
+from .test import TestCase
+from aioweb.test import run_test_server, CouchDBTestCase
 from . import get_routes
 from .model import Nutrient, Meal
-from auth import User
-from static_handler import get_routes as get_static_routes
+from aioweb.auth import User
 from .importer import import_sr25_nutr_def
 from nose.tools import nottest as broken
 
@@ -87,7 +87,7 @@ class FunctionalTests(CouchDBTestCase):
     def test_main_page(self):
         import logging
         logging.basicConfig(level=logging.DEBUG)
-        router = get_static_routes()
+        router = get_routes()
         router.add_handler('/', get_routes())
         with run_test_server(self.loop, router=router, port=9999) as httpd:
             url = httpd.url("/")

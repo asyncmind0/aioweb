@@ -3,5 +3,8 @@ from aioweb.db import get_db
 
 class Controller():
     def __init__(self, db=None, session=None,**kwargs):
-        self.db = db or get_db()
         self.session = session
+
+    @property
+    def db(self):
+        return get_db()

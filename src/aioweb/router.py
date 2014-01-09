@@ -2,7 +2,6 @@ import re
 import collections
 from aioweb.errors import ErrorHandlerMixin
 import sys
-import importlib
 import imp
 
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Simple server written using an event loop."""
 
+import sys
 assert sys.version >= '3.3', 'Please use Python 3.3 or higher.'
 import argparse
 import logging
@@ -11,7 +12,8 @@ try:
 except ImportError:  # pragma: no cover
     ssl = None
 import asyncio
-from multithreading import Superviser
+from aiohttp.server import ServerHttpProtocol
+from .multithreading import Superviser
 from debug import set_except_hook
 
 
@@ -47,7 +49,7 @@ def configure_logging():
     logging.getLogger('asyncio').level = logging.ERROR
 
 
-class ProtocolFactory():
+class ProtocolFactory(ServerHttpProtocol):
     def __call__(self):
         raise NotImplemented()
 

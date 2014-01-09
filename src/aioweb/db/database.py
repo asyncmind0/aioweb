@@ -95,6 +95,7 @@ class CouchDBAdapter(DatabaseAdapter):
         data = yield from response.read()
         return Bunch(**json_loads(data))
 
+    @asyncio.coroutine
     def create_db(self, dbname=None, **options):
         if not dbname:
             dbname = self._dbname
