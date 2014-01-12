@@ -19,6 +19,9 @@ class NutrientsController(Controller):
     def keys(self):
         n = yield from self.db.view('nutrient', 'keys', group=True)
         return [d['key'] for d in n.rows]
+    def names(self):
+        n = yield from self.db.view('nutrient', 'names', group=True)
+        return [d['key'] for d in n.rows]
 
     def all(self):
         nutrients = yield from Nutrient.all(self.db)
@@ -44,7 +47,7 @@ class FoodController(Controller):
         food = Food(**value)
         nutrient_controller = NutrientsController(self.db)
         yield from nutrient_controller.validate_nutrients(
-            [n['tag'] for n in food.nutrients])
+            [n for n in food.nutrients.keys()])
         old_food = None
         if food._id:
             old_food = yield from Food.get(_id)

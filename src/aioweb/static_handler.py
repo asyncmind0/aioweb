@@ -3,6 +3,7 @@ import aiohttp
 import email.message
 from aioweb.handler import Handler
 import mimetypes
+import logging
 
 
 class StaticFileHandler(Handler):
@@ -21,14 +22,14 @@ class StaticFileHandler(Handler):
             path = path[len(self.baseurl):]
 
         if (not path.isprintable() or '/.' in path):
-            raise aiohttp.HttpStatusException(
+            raise aiohttp.HttpErrorException(
                 404, message="Bad path:%s" % path)
         else:
             filepath = path = os.path.join(self.staticroot, path)
-            # self.logger.debug("staticroot:%s", os.path.join(self.staticroot,
-            # path))
+            logging.getLogger('static_paths').debug("staticroot:%s", os.path.join(self.staticroot,
+             path))
             if not os.path.exists(path):
-                raise aiohttp.HttpStatusException(
+                raise aiohttp.HttpErrorException(
                     404, message="Not found:%s" % path)
             else:
                 isdir = os.path.isdir(path)
@@ -39,7 +40,7 @@ class StaticFileHandler(Handler):
 
         if isdir and not path.endswith('/'):
             path = path + '/'
-            raise aiohttp.HttpStatusException(
+            raise aiohttp.HttpErrorException(
                 302, headers=(('URI', path), ('Location', path)))
 
         response = aiohttp.Response(

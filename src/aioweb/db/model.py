@@ -17,11 +17,12 @@ class ModelMeta(type):
         }
         attrs['default_views'] = default_views
         model_cls = type.__new__(cls, name, bases, attrs)
-        cls.REGISTRY[name] = model_cls
+        cls.REGISTRY[name] = {'class': model_cls, 'synced': False}
         return model_cls
 
     def get_model_by_name(cls, name):
         return cls.REGISTRY[name]
+
 
 
 class Model(metaclass=ModelMeta):
@@ -88,26 +89,6 @@ class Model(metaclass=ModelMeta):
     def update(self, value):
         self.data.update(value)
 
-    @classmethod
-    def sync_design(cls, db):
-        assert cls.views is not None, NotImplemented("views")
-        info = yield from db.info()
-        if hasattr(info, 'reason') and info.reason == 'no_db_file':
-            r = yield from db.create_db()
-            assert hasattr(r, 'ok') and r.ok == True, \
-                "Failed to create database: %s" % str(r)
-        view_name = cls.__name__.lower()
-        r = yield from db.get_design_doc(view_name)
-        if r and hasattr(r, 'views'):
-            r = yield from db.delete_design_doc(view_name, rev=r._rev)
-            assert hasattr(r, 'ok') and r.ok == True, \
-                "Failed to delete design doc: %s" % str(r)
-        _views = {}
-        _views.update(cls.default_views)
-        _views.update(cls.views)
-        r = yield from db.put_design_doc(view_name, dict(views=_views))
-        assert hasattr(r, 'ok') and r.ok == True, \
-            "Failed to put design doc: %s" % str(r)
 
     def __str__(self):
         return "<%s>%s" % (self.__class__.__name__, self.data)

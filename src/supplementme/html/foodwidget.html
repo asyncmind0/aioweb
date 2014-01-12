@@ -1,22 +1,81 @@
-<div class='food-widget' 
+<div class="food-widget"
      dojo-data-type="dijit/form/Form">
   <h2>Foods</h2>
-  <h3>Saved Foods</h3>
-  <select class='food-select'>
-  </select>
-  <button class='add-food-button' 
-          data-dojo-attach-event="ondijitclick:onAddFood">
-    Add
-  </button>
-  <input type='text' class='food-name'/>
-  <button class='save-food-button' 
-          data-dojo-attach-point="saveFood"
-          data-dojo-attach-event="ondijitclick:onSaveFood">
-    Save
-  </button>
-  <select class='nutrient-select'
-          data-dojo-attach-point="nutrientsSelect">
-  </select>
+  <div>
+    <h3>Saved Foods</h3>
+    <p>Add existing foods.</p>
+    <select class="food-select"
+            data-dojo-attach-point="foodSelect">
+    </select>
+    <button class="add-food-button"
+            data-dojo-attach-event="ondijitclick:onAddFood">
+      Add
+    </button>
+  </div>
+  <br>
+  <div data-dojo-type="dijit/form/Form" 
+            data-dojo-attach-point="saveFoodForm"
+       encType="multipart/form-data" action="" method="">
+    <h3>New Food</h3>
+    <p>Add new food.</p>
+    <label >Name:</label>
+    <input type="text" class="food-name"
+           data-dojo-attach-point="foodName"
+            required="true"
+           data-dojo-type="dijit/form/TextBox"
+           data-dojo-props="trim:true, propercase:true,
+                            placeHolder:'Food Name'"/>
+    <br>
+    <label >Default Serving Size:</label>
+    <input type="text" class="food-quantity"
+           value="0"
+            required="false"
+           data-dojo-props="placeHolder: 'Default Serving Size', smallDelta:0.1"
+           data-dojo-attach-point="foodQuantity"
+           data-dojo-type="dijit/form/NumberSpinner"/>
+    <br>
+    <label >Serving Unit:</label>
+    <select name="food-unit"
+            required="false"
+            data-dojo-attach-point="foodUnit"
+            data-dojo-type="dijit/form/Select">
+      <option value="mg">Milligrams</option>
+      <option value="g" selected="selected">Grams</option>
+    </select>
+    <br>
+    <label >Nutrients:</label>
+    <select class="nutrient-select"
+            data-dojo-attach-point="nutrientsSelect">
+    </select>
+    <input type="text" class="nutrient-quantity"
+           value="0"
+            required="false"
+           data-dojo-props="placeHolder: 'Quantity', smallDelta:0.1"
+           data-dojo-attach-point="nutrientQuantity"
+           data-dojo-type="dijit/form/NumberSpinner"/>
+    <select name="nutrient-unit"
+            required="false"
+            data-dojo-attach-point="nutrientUnit"
+            data-dojo-type="dijit/form/Select">
+      <option value="mg">Milligrams</option>
+      <option value="g" selected="selected">Grams</option>
+    </select>
+
+    <button class="add-nutrients-button"
+            type="button"
+            data-dojo-attach-point="addNutrients"
+            data-dojo-attach-event="ondijitclick:onAddNutrient">
+      +
+    </button>
+    <br>
+    <ol data-dojo-attach-point="nutrientsList">
+    </ol>
+    <button class="save-food-button"
+            type="submit"
+            data-dojo-attach-point="saveFood">
+      Save
+    </button>
+  </div>
   <!--<div data-dojo-type="supplementme.NutrientsWidget"></div>
   <ol class='nutrients-list'>
   </ol>-->

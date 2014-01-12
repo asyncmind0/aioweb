@@ -239,3 +239,31 @@ class CouchDBAdapter(DatabaseAdapter):
         if 'error' in data:
             raise CouchDBError(data['reason'])
         return data
+
+    def sync_designs(self, db):
+        from .model import Model
+        for key, data in Model.REGISTRY.items():
+            synced = data['synced']
+            model = data['class']
+            if synced:
+                continue
+            print(model)
+            assert model.views is not None, NotImplemented("views")
+            info = yield from db.info()
+            if hasattr(info, 'reason') and info.reason == 'no_db_file':
+                r = yield from db.create_db()
+                assert hasattr(r, 'ok') and r.ok is True, \
+                    "Failed to create database: %s" % str(r)
+            view_name = model.__name__.lower()
+            r = yield from db.get_design_doc(view_name)
+            if r and hasattr(r, 'views'):
+                r = yield from db.delete_design_doc(view_name, rev=r._rev)
+                assert hasattr(r, 'ok') and r.ok is True, \
+                    "Failed to delete design doc: %s" % str(r)
+            _views = {}
+            _views.update(model.default_views)
+            _views.update(model.views)
+            r = yield from db.put_design_doc(view_name, dict(views=_views))
+            assert hasattr(r, 'ok') and r.ok is True, \
+                "Failed to put design doc: %s" % str(r)
+            data["synced"] = True

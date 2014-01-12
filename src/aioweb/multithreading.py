@@ -47,9 +47,10 @@ class ChildProcess:
             self.loop.stop()
             os._exit(0)
         loop.add_signal_handler(signal.SIGINT, stop)
+        self.protocol = self.protocol_factory()
 
         f = loop.create_server(
-            self.protocol_factory(), sock=self.sock, ssl=self.ssl)
+            self.protocol, sock=self.sock, ssl=self.ssl)
         srv = loop.run_until_complete(f)
         x = srv.sockets[0]
         self.logger.info('Starting srv worker process {} on {}'.format(
@@ -86,7 +87,7 @@ class ChildProcess:
                 self.loop.stop()
                 break
             elif msg.data.startswith("RELOAD"):
-                self.protocol_factory.reload_handlers(msg.data.split(':')[1])
+                self.protocol.reload_handlers(msg.data.split(':')[1])
 
         read_transport.close()
         write_transport.close()
@@ -120,7 +121,7 @@ class Worker:
             # parent
             os.close(up_read)
             os.close(down_write)
-            self.connect(pid, up_write, down_read)
+            asyncio.async(self.connect(pid, up_write, down_read))
         else:
             # child
             os.close(up_write)
@@ -185,7 +186,7 @@ class Worker:
             MyStreamProtocol, os.fdopen(up_write, 'wb'))
 
         # websocket protocol
-        self.reader = proto.set_parser(websocket.WebSocketParser())
+        self.reader = proto.set_parser(websocket.WebSocketParser)
         self.writer = websocket.WebSocketWriter(write_transport)
 
         # store info
@@ -193,8 +194,8 @@ class Worker:
         self.ping = time.monotonic()
         self.rtransport = read_transport
         self.wtransport = write_transport
-        self.chat_task = self.chat(self.reader, proto)
-        self.heartbeat_task = self.heartbeat(self.writer)
+        self.chat_task = asyncio.Task(self.chat(self.reader, proto))
+        self.heartbeat_task = asyncio.Task(self.heartbeat(self.writer))
 
     def send_reload(self, path):
         self.writer.send("RELOAD:%s" % path)

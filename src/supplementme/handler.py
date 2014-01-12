@@ -1,12 +1,14 @@
+from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import os
 import logging
 from aioweb.handler import Handler
 from aioweb.renderers import HtmlRenderer, JsonRenderer
 from .controller import (
-    NutrientsController, MealController)
+    NutrientsController, MealController, FoodController)
 from .model import Nutrient
 import asyncio
 from aioweb.auth import AuthController, authenticated
+import json
 
 
 class HomeHandler(Handler):
@@ -43,7 +45,23 @@ class FoodHandler(Handler):
 
     @asyncio.coroutine
     def __call__(self, request_args=None, **kwargs):
-        self.render(**dict(test='test'))
+        controller = FoodController()
+        if 'add' in request_args:
+            form = yield from self.get_form_data(True)
+            food = dict(
+                name=form['name'][0],
+                serving_size=form['serving_size'][0],
+                unit=form['unit'][0],
+                nutrients=json.loads(form['nutrients'][0]))
+            print(food)
+            food = yield from controller.add_update_food(food)
+            assert hasattr(food, '_id'), str(food)
+            self.render(**dict(food=food.data))
+        else:
+            foods = yield from controller.all()
+            sj_debug() ###############################################################
+
+            self.render(**dict(food=foods))
 
 
 class MealHandler(Handler):

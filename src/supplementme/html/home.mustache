@@ -7,35 +7,41 @@
         <script src="/static/js/html5shiv-printshiv.js" media="all"></script><![endif]-->
         <link href="jasmine/jasmine.css" rel="stylesheet" type="text/css"></link>
         <link rel="stylesheet"
-              href="dojo/../dijit/themes/claro/claro.css">
+              href="dojo/dijit/themes/tundra/tundra.css">
         
         <script src="jasmine/jasmine.js" type="text/javascript"></script>
         <script src="jasmine/jasmine-html.js" type="text/javascript"></script>
         <script src="jasmine/console.js" type="text/javascript"></script>
         <script src="jasmine/boot.js" type="text/javascript"></script>
-        <script src="dojo/dojo.js"></script>
         <script type='text/javascript'>
           var dojoConfig = {
              async: true, 
              dojoBlankHtmlUrl: '/blank.html',
+             tlmSiblingOfDojo:false,
              packages: [ {
                  name: 'supplementme',
-                 location: location.pathname.replace(/http:\/[^/]+$/, '') + '/supplementme'
+                 location:  '/supplementme'
             } ]};
-          require([ 'supplementme/test' ], function(thinger){
-                         /*getJasmineRequireObj().console(jasmineRequire, window.jasmine);
-                         var options={};
-                         options.print = function(msg){console.log(msg)};
-                         window.jasmine.getEnv().addReporter(new window.jasmine.ConsoleReporter(options));*/
+        </script>
+        <script src="dojo/dojo/dojo.js"></script>
+        <script type='text/javascript'>
+          require([ 'supplementme/test',
+                   "supplementme/main"
+ ], function(thinger){
+             
+             /*getJasmineRequireObj().console(jasmineRequire, window.jasmine);
+             var options={};
+             options.print = function(msg){console.log(msg)};
+             window.jasmine.getEnv().addReporter(new window.jasmine.ConsoleReporter(options));*/
 });
         </script>
         <link href="supplementme/main.css" rel="stylesheet" type="text/css"></link>
         {{#scripts}}
         {{/scripts}}
     </head>
-    <body>
+    <body class="tundra">
         <!-- This is a VERY bare bones version of a HTML5 template! -->
-        <h1>Nutrition Tracker</h1>
+        <h1>Test App</h1>
         <form action="/search">
             <input type='text'>
             <input type='submit'>

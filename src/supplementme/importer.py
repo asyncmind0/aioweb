@@ -1,11 +1,14 @@
 import os
 import csv
 import logging
+import asyncio
 from .model import Nutrient
+from .controller import NutrientsController
 from aioweb.config import config
 
 
-def import_sr25_nutr_def(db, loop):
+@asyncio.coroutine
+def import_sr25_nutr_def(db):
     """
     Columns:
     - Nutr_No  A 3* N Unique 3-digit identifier code for a nutrient. 
@@ -26,12 +29,14 @@ def import_sr25_nutr_def(db, loop):
     with open(data_path, 'r', encoding='iso-8859-1') as datafile:
         logger = logging.getLogger("importer")
         reader = csv.reader(datafile, delimiter='^')
+        controller = NutrientsController(db=db)
+        keys = yield from controller.keys()
         for row in reader:
             row = [col[1:-1] for col in row]
-            if not row[2]:
+            if not row[2] or row[2] in keys:
                 logger.debug("Skipping: %s" % str(row))
                 continue
             nutrient = Nutrient(name=row[3], tag=row[2], unit=row[1],
                                 number=row[0], decimal_places=row[4])
-            r = loop.run_until_complete(nutrient.save(db))
+            r = yield from nutrient.save(db)
             assert hasattr(r, 'ok') and r.ok is True
