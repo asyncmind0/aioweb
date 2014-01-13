@@ -18,12 +18,14 @@ def set_config(basepath, configfile='development'):
     config.read(configpath)
     try:
         logging.config.fileConfig(config)
-    except KeyError:
+    except Exception as e:
+        logging.exception("Not yet python 3.4")
         # python 3.4 addresses the issue of direclty passing config obj
         try:
             # try app config
             logging.config.fileConfig(configpath)
-        except KeyError:
+        except Exception as e:
+            logging.exception("falling back to default config")
             # fallback to default
             logging.config.fileConfig(default_config_path)
 

@@ -19,8 +19,11 @@ paths.append(src_path)
 sys.path.extend(paths)
 site.addsitedir(lib_path)
 os.chdir(src_path)
-import importlib
-module = importlib.import_module('%s.application'% sys.argv[1])
-sys.argv = sys.argv[1:]
-module.main()
-#os.execvp("python3", sys.argv[0:])#, os.environ)
+if len(sys.argv) > 2:
+    import importlib
+    module = importlib.import_module('%s.application'% sys.argv[1])
+    sys.argv = sys.argv[1:]
+    module.main()
+    #os.execvp("python3", sys.argv[0:])#, os.environ)
+else:
+    print(":".join(sys.path))

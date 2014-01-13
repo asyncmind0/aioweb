@@ -1,4 +1,5 @@
-from .database import CouchDBAdapter
+from .couchdb import CouchDBAdapter
+from .mongodb import MongoDBAdapter
 
 
 def get_db():

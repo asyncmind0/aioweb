@@ -5,7 +5,7 @@ import unittest
 import unittest.mock
 import gc
 import os
-from aioweb.db.database import CouchDBAdapter
+from aioweb.db import CouchDBAdapter
 
 import asyncio
 from aiohttp import test_utils
@@ -34,7 +34,6 @@ class TestCase(unittest.TestCase):
         set_except_hook()
         from aioweb.config import set_config
         self.config = set_config(self.base_path, self.config_name)
-        logging.getLogger('asyncio').level = logging.ERROR
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
