@@ -105,8 +105,8 @@ class Worker:
         self.ssl = ssl
         self.shutdown = False
         self.restart = False
-        self.start()
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.start()
 
     def start(self):
         assert not self._started
@@ -126,6 +126,8 @@ class Worker:
             # child
             os.close(up_write)
             os.close(down_read)
+            self.logger.info('Starting child worker process {} '.format(
+                os.getpid()))
 
             # cleanup after fork
             asyncio.set_event_loop(None)
@@ -224,6 +226,7 @@ class Superviser:
         sock.bind((self.args.host, self.args.port))
         sock.listen(1024)
         sock.setblocking(False)
+        logging.debug("Started serving")
 
         # start processes
         for idx in range(self.args.workers):

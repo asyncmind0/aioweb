@@ -43,10 +43,6 @@ ARGS.add_argument(
     default='./js/', type=str, help='Js root.')
 
 
-def configure_logging():
-    #logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
-    logging.getLogger().level = logging.DEBUG
-    logging.getLogger('asyncio').level = logging.ERROR
 
 
 class ProtocolFactory(ServerHttpProtocol):
@@ -57,8 +53,7 @@ class ProtocolFactory(ServerHttpProtocol):
         self.router.reload_handlers(module_path)
 
 
-def main(protocol_factory=None):
-    configure_logging()
+def startapp(protocol_factory=None):
     if not protocol_factory:
         protocol_factory = ProtocolFactory()
     set_except_hook()
@@ -93,6 +88,8 @@ def main(protocol_factory=None):
     superviser = Superviser(args)
     superviser.start(protocol_factory, sslcontext)
 
+def main():
+    startapp()
 
 if __name__ == '__main__':
     main()

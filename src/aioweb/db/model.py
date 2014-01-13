@@ -1,6 +1,3 @@
-from debug import pprint, shell, profile, debug as sj_debug
-
-
 class ModelMeta(type):
     REGISTRY = {}
 
@@ -88,7 +85,6 @@ class Model(metaclass=ModelMeta):
 
     def update(self, value):
         self.data.update(value)
-
 
     def __str__(self):
         return "<%s>%s" % (self.__class__.__name__, self.data)

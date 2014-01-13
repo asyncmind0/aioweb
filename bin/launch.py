@@ -19,4 +19,7 @@ paths.append(src_path)
 sys.path.extend(paths)
 site.addsitedir(lib_path)
 os.chdir(src_path)
-os.execvp("python3", sys.argv[1:])#, os.environ)
+from supplementme.application import main
+sys.argv = sys.argv[:1]
+main()
+#os.execvp("python3", sys.argv[0:])#, os.environ)

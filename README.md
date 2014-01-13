@@ -18,8 +18,6 @@ to set up a dev env and install python dependencies you should be able to use bu
 [default]
 hostname= # currently unused
 staticroot=static
-jasmine=/path/to/jasmine-standalone-2.0.0/lib/jasmine-2.0.0/
-dojo=/path/to/dojo-src/ #can use dojo release also
 [couchdb]
 username=couchuser
 password=couchpassword
@@ -32,7 +30,7 @@ database=aiowebtest
 There is a working example app in the src/supplementme which I'm trying to develop.
 to run it 
 
-    PYTHONPATH=$PYTHONPATH:$PWD/src/ python3 src/supplementme/application.py
+    python3 bin/launch.py supplementme
  
 The example app dependencies:
  - dojo [https://dojotoolkit.org/] 

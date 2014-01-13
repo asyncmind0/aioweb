@@ -1,4 +1,3 @@
-from debug import pprint, shell, profile, debug as sj_debug
 import logging
 import aiohttp
 
@@ -29,7 +28,6 @@ class ErrorHandlerMixin():
 
     def handle_error(self, exception, message, request_args=None):
         """Default handler exception handler"""
-        sj_debug() ###############################################################
         if isinstance(exception, aiohttp.errors.HttpStatusException):
             if hasattr(self, 'handle_%s' % exception.code):
                 response = getattr(self, 'handle_%s' % exception.code)(

@@ -1,14 +1,13 @@
 import os
 import imp
 from aioweb.server import HttpServer
-from aioweb.application import ProtocolFactory, main
+from aioweb.application import ProtocolFactory, startapp
 from aioweb.router import Router
 from aioweb.config import set_config
-from aioweb.util import configure_logging
 from aioweb.static_handler import StaticFileHandler
 from os.path import join, dirname
 from supplementme.importer import import_sr25_nutr_def
-from model import (Meal, Food, Nutrient)
+from .model import (Meal, Food, Nutrient)
 from aioweb.auth import User
 import logging
 
@@ -31,12 +30,15 @@ def get_static_routes(router=None):
 class SupplementMeProtocolFactory(ProtocolFactory):
 
     def __call__(self):
-        import supplementme
-        imp.reload(supplementme)
-        router = get_static_routes()
-        router.add_handler('/', supplementme.get_routes())
-        self.router = router
-        return HttpServer(self.router, debug=True, keep_alive=75)
+        try:
+            import supplementme
+            imp.reload(supplementme)
+            router = get_static_routes()
+            router.add_handler('/', supplementme.get_routes())
+            self.router = router
+            return HttpServer(self.router, debug=True, keep_alive=75)
+        except Exception as e:
+            logging.exception("Failed to create HttpServer")
 
 
 def init_database():
@@ -55,10 +57,12 @@ def init_database():
     loop.run_until_complete(import_sr25_nutr_def(db))
 
 
-if __name__ == '__main__':
+def main():
     base_path = os.path.dirname(__file__)
     set_config(base_path, 'development')
-    configure_logging()
     logging.getLogger('static_paths').setLevel(logging.INFO)
     init_database()
-    main(SupplementMeProtocolFactory)
+    startapp(SupplementMeProtocolFactory)
+
+if __name__ == '__main__':
+    main()

@@ -15,11 +15,3 @@ class AioWebLogFormatter(logging.Formatter):
         etype, evalue, etb = exc_info
         tblist = self.ftb.structured_traceback(etype, evalue, etb)
         return '\n'.join(tblist)
-
-
-def configure_logging(color_console=True):
-    root = logging.getLogger()
-    if color_console:
-        for handler in root.handlers:
-            if isinstance(handler, logging.StreamHandler):
-                handler.setFormatter(AioWebLogFormatter())
