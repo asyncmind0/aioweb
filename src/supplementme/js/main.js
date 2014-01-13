@@ -65,11 +65,15 @@ require([
                     declare.safeMixin(this, args);
                     this.foodNutrients = {};
                     var foodStore = new JsonRest({
+                        idProperty: '_id',
                         target: "/food/"
                     });
-                    this.foodStore = new Memory({ });
+                    this.foodStore = new Memory({ 
+                        idProperty: '_id',
+                    });
                     this.foodStoreCache = new Cache(foodStore, this.foodStore);
-                    this.foodStoreCache.query({id:''});
+                    this.foodStoreCache.query({'_id':''});
+                    debugger
                     var nutrientStore = new JsonRest({
                         target: "/nutrients/",
                     });

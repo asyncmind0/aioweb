@@ -1,11 +1,10 @@
-from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import os
 import logging
 from aioweb.handler import Handler
 from aioweb.renderers import HtmlRenderer, JsonRenderer
 from .controller import (
     NutrientsController, MealController, FoodController)
-from .model import Nutrient
+from .model import Nutrient, Food, Meal
 import asyncio
 from aioweb.auth import AuthController, authenticated
 import json
@@ -58,10 +57,9 @@ class FoodHandler(Handler):
             assert hasattr(food, '_id'), str(food)
             self.render(**dict(food=food.data))
         else:
-            foods = yield from controller.all()
-            sj_debug() ###############################################################
+            foods = yield from Food.all(controller.db)
 
-            self.render(**dict(food=foods))
+            self.render([food for food in foods])
 
 
 class MealHandler(Handler):
