@@ -6,7 +6,55 @@ from urllib.parse import quote, urlencode
 from urllib.request import urljoin
 from uuid import uuid4
 from .model_codecs import json_dumps, json_loads
-from .database import DatabaseAdapter
+from .database import DatabaseAdapter, Bunch
+from .model import Model
+
+
+def catch_db_exception(func):
+    """Decorator to catch exceptions
+
+    """
+    def catch_exception(*args, **kwargs):
+        try:
+            if inspect.isgeneratorfunction(func):
+                coro = func(*args, **kwargs)
+                exc = coro.exception()
+                if exc:
+                    raise exc
+            else:
+                return func(*args, **kwargs)
+        except asyncio.ConnectionRefusedError as e:
+            logging.error('Could not connect to couchdb')
+            import os
+            import signal
+            os.kill(os.getpid(), signal.SIGTERM)
+            sys.exit(1)
+    return catch_exception
+
+
+class ResultList(Bunch):
+    def __len__(self):
+        if 'total_rows' in self.__dict__:
+            return self.total_rows
+        else:
+            return 0
+
+    def __iter__(self):
+        for row in self.__dict__['rows']:
+            yield row['value']
+
+    def first(self):
+        if 'total_rows' in self.__dict__ and \
+           self.__dict__['total_rows'] > 0:
+            return self.__dict__['rows'][0]['value']
+        return None
+
+    def last(self):
+        if 'total_rows' in self.__dict__ and \
+           self.__dict__['total_rows'] > 0:
+            return self.__dict__['rows'][-1]['value']
+        return None
+
 
 
 class CouchDBError(Exception):
@@ -180,30 +228,31 @@ class CouchDBAdapter(DatabaseAdapter):
             raise CouchDBError(data['reason'])
         return data
 
-    def sync_designs(self, db):
-        from .model import Model
+    def sync_designs(self, force=False):
         for key, data in Model.REGISTRY.items():
             synced = data['synced']
             model = data['class']
-            if synced:
+            if synced and not force:
                 continue
             print(model)
             assert model.views is not None, NotImplemented("views")
-            info = yield from db.info()
+            info = yield from self.info()
+            print(info)
             if hasattr(info, 'reason') and info.reason == 'no_db_file':
-                r = yield from db.create_db()
+                r = yield from self.create_db()
                 assert hasattr(r, 'ok') and r.ok is True, \
                     "Failed to create database: %s" % str(r)
             view_name = model.__name__.lower()
-            r = yield from db.get_design_doc(view_name)
+            r = yield from self.get_design_doc(view_name)
             if r and hasattr(r, 'views'):
-                r = yield from db.delete_design_doc(view_name, rev=r._rev)
+                r = yield from self.delete_design_doc(view_name, rev=r._rev)
                 assert hasattr(r, 'ok') and r.ok is True, \
                     "Failed to delete design doc: %s" % str(r)
             _views = {}
             _views.update(model.default_views)
             _views.update(model.views)
-            r = yield from db.put_design_doc(view_name, dict(views=_views))
+            r = yield from self.put_design_doc(
+                view_name, dict(views=_views))
             assert hasattr(r, 'ok') and r.ok is True, \
                 "Failed to put design doc: %s" % str(r)
             data["synced"] = True

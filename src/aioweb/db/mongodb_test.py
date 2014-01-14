@@ -6,11 +6,6 @@ from aioweb.db.model import Model
 from pymongo.mongo_client import MongoClient
 
 
-class TestModel(Model):
-    required_fields = ['name']
-    pass
-
-
 class MongoDBAdapterTest(TestCase):
     def setUp(self):
         super(MongoDBAdapterTest, self).setUp()

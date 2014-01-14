@@ -5,7 +5,7 @@ import unittest
 import unittest.mock
 import gc
 import os
-from aioweb.db import CouchDBAdapter
+from aioweb.db import CouchDBAdapter, Model, get_db
 
 import asyncio
 from aiohttp import test_utils
@@ -40,24 +40,13 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         # just in case if we have transport close callbacks
         test_utils.run_briefly(self.loop)
-
         self.loop.close()
         gc.collect()
 
 
-class CouchDBTestCase(TestCase):
-    database = 'asyncioblog'
-
-    def setUp(self):
-        super(CouchDBTestCase, self).setUp()
-        self.db = CouchDBAdapter(
-            'http://%(username)s:%(password)s@localhost:5984/' %
-            self.config['couchdb'], self.config['couchdb']['database'])
-
-    def tearDown(self):
-        r = self.loop.run_until_complete(self.db.delete_db())
-        assert hasattr(r, 'ok') and r.ok is True, "db call failed: %s" % str(r)
-        super(CouchDBTestCase, self).tearDown()
+class TestModel(Model):
+    required_fields = ['name']
+    pass
 
 
 @nottest

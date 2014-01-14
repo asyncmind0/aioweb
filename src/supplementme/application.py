@@ -48,10 +48,6 @@ def init_database():
     loop = asyncio.get_event_loop()
     from aioweb.db import get_db
     db = get_db()
-    resp = loop.run_until_complete(db.info())
-    if not hasattr(resp, 'db_name'):
-        resp = loop.run_until_complete(db.create_db())
-        assert hasattr(resp, 'ok'), resp.__dict__
     # need to import model to get them registered in the metaclass registry
     loop.run_until_complete(db.sync_designs(db))
     loop.run_until_complete(import_sr25_nutr_def(db))

@@ -1,53 +1,33 @@
-from aioweb.test import CouchDBTestCase
+from aioweb.test import run_briefly
 from .controller import (
     NutrientsController, FoodController, MealController,
     UserController)
 from .model import Nutrient, Food, Meal
 from aioweb.auth import User, AuthController
 from aioweb.session import Session
+from aioweb.db.couchdb_test import CouchDBTestCase
+from aioweb.controller_test import ControllerTest as BaseControllerTest
 from .importer import import_sr25_nutr_def
+from nose.tools import nottest
 
 
-class ControllerTest (CouchDBTestCase):
+class ControllerTest (BaseControllerTest):
     def setUp(self):
         super(ControllerTest, self).setUp()
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.controller = NutrientsController(self.db)
-        self.test_nutrients = [
-            Nutrient(number=10, name='vitamin c', tag='vitc',
-                     decimal_places=3, unit='mg'),
-            Nutrient(number=10, name='vitamin d', tag='vitd',
-                     decimal_places=3, unit='mg')
-        ]
-
-    def tearDown(self):
-        super(ControllerTest, self).tearDown()
-
-    def test_new(self):
-        for nut in self.test_nutrients:
-            r = self.loop.run_until_complete(nut.save(self.db))
-            assert hasattr(r, 'ok') and r.ok is True, str(r)
-
-    def test_all(self):
-        self.test_new()
-        r = self.loop.run_until_complete(Nutrient.all(self.db))
-        assert len(r.rows) > 0, str(r)
-
-    def test_keys(self):
-        self.test_new()
-        r = self.loop.run_until_complete(self.controller.keys())
-        assert len(r) > 0, str(r)
-        test_names = [n.name for n in self.test_nutrients]
-        self.assertListEqual(sorted(r), sorted(test_names)), str(r)
+        self.loop.run_until_complete(import_sr25_nutr_def(self.db))
+        self.test_food = dict(name="somefood",
+                              nutrients={'ALC': dict(quantity=10),
+                                         'ASH': dict(quantity=20),
+                                         'CAFFN': dict(quantity=10),
+                                         'BETN': dict(quantity=20)},
+                              serving_size=300,
+                              unit='mg')
 
 
-class AuthControllerTest (CouchDBTestCase):
+class AuthControllerTest (ControllerTest):
     def setUp(self):
         super(AuthControllerTest, self).setUp()
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.loop.run_until_complete(Food.sync_design(self.db))
-        self.loop.run_until_complete(Meal.sync_design(self.db))
-        self.loop.run_until_complete(User.sync_design(self.db))
+        self.loop.run_until_complete(self.db.sync_designs())
         self.user_controller = UserController(self.db)
         self.auth_controller = AuthController(self.db)
         self.test_user = 'testuser'
@@ -72,25 +52,16 @@ class FoodControllerTest (AuthControllerTest):
         super(FoodControllerTest, self).setUp()
         self.test_login()
         self.controller = FoodController(self.db, session=self.session)
-        import_sr25_nutr_def(self.db, self.loop)
+        self.loop.run_until_complete(import_sr25_nutr_def(self.db))
 
     def test_add_food(self):
-        food = dict(name="somefood",
-                    nutrients=[dict(tag='CAFFN', quantity=10),
-                               dict(tag='BETN', quantity=20)],
-                    serving_size=200,
-                    unit='mg')
-        food = self.loop.run_until_complete(self.controller.add_update_food(food))
+        food = self.loop.run_until_complete(
+            self.controller.add_update_food(self.test_food))
         assert hasattr(food, '_id') and food.name == "somefood", str(food)
 
     def test_update_food(self):
-        food = dict(name="somefood",
-                    nutrients=[dict(tag='ALC', quantity=10),
-                               dict(tag='ASH', quantity=20)],
-                    serving_size=300,
-                    unit='mg')
         food = self.loop.run_until_complete(
-            self.controller.add_update_food(food))
+            self.controller.add_update_food(self.test_food))
         assert hasattr(food, '_id') and food.name == "somefood", str(food)
         assert hasattr(food, 'serving_size') and food.serving_size == 300, str(food)
 
@@ -106,19 +77,14 @@ class FoodControllerTest (AuthControllerTest):
 class MealControllerTest (AuthControllerTest):
     def setUp(self):
         super(MealControllerTest, self).setUp()
-        import_sr25_nutr_def(self.db, self.loop)
+        self.loop.run_until_complete(import_sr25_nutr_def(self.db))
         self.test_login()
         self.controller = MealController(session=self.session)
         self.food_controller = FoodController(session=self.session)
 
     def test_add_meal(self):
-        food = dict(name="somefood",
-                    nutrients=[dict(tag='ALC', quantity=10),
-                               dict(tag='ASH', quantity=20)],
-                    serving_size=300,
-                    unit='mg')
         food = self.loop.run_until_complete(
-            self.food_controller.add_update_food(food))
+            self.food_controller.add_update_food(self.test_food))
         assert hasattr(food, '_id') and food.name == "somefood", str(food)
         meal = dict(foods=[food._id], quantity='200g', user=self.userid)
         r = self.loop.run_until_complete(self.controller.add_meal(meal))
@@ -135,10 +101,33 @@ class NutrientControllerTest (AuthControllerTest):
     def setUp(self):
         super(NutrientControllerTest, self).setUp()
         self.controller = NutrientsController(self.db)
-        import_sr25_nutr_def(self.db, self.loop)
         self.test_login()
+        self.test_nutrients = [
+            Nutrient(number=10, name='vitamin c', tag='vitc',
+                     decimal_places=3, unit='mg'),
+            Nutrient(number=10, name='vitamin d', tag='vitd',
+                     decimal_places=3, unit='mg')
+        ]
 
     def test_list_nutrients(self):
         r = self.loop.run_until_complete(
             self.controller.all())
         assert len(r) > 0, r
+
+    def test_new(self):
+        for nut in self.test_nutrients:
+            r = self.loop.run_until_complete(nut.save(self.db))
+            assert hasattr(r, 'ok') and r.ok is True, str(r)
+
+    def test_all(self):
+        self.test_new()
+        r = self.loop.run_until_complete(Nutrient.all(self.db))
+        assert len(r.rows) > 0, str(r)
+
+    @nottest
+    def test_keys(self):
+        self.test_new()
+        r = self.loop.run_until_complete(self.controller.keys())
+        assert len(r) > 0, str(r)
+        test_names = [n.tag for n in self.test_nutrients]
+        self.assertListEqual(sorted(r), sorted(test_names)), str(r)
