@@ -45,7 +45,7 @@ class FoodHandler(Handler):
     @asyncio.coroutine
     def __call__(self, request_args=None, **kwargs):
         controller = FoodController()
-        if 'add' in request_args:
+        if request_args and 'add' in request_args:
             form = yield from self.get_form_data(True)
             food = dict(
                 name=form['name'][0],

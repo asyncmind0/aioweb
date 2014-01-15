@@ -234,10 +234,8 @@ class CouchDBAdapter(DatabaseAdapter):
             model = data['class']
             if synced and not force:
                 continue
-            print(model)
             assert model.views is not None, NotImplemented("views")
             info = yield from self.info()
-            print(info)
             if hasattr(info, 'reason') and info.reason == 'no_db_file':
                 r = yield from self.create_db()
                 assert hasattr(r, 'ok') and r.ok is True, \

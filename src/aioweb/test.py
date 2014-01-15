@@ -2,6 +2,7 @@
 import unittest
 
 
+
 import unittest.mock
 import gc
 import os
@@ -26,6 +27,31 @@ def run_briefly(loop):
     loop.run_until_complete(t)
 
 
+def test_logging():
+    logging.config.dictConfig({
+        'version': 1,
+        'disable_existing_loggers': False,
+        'incremental': True,
+        'formatters': {
+            'standard': {
+                'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+            },
+        },
+        'loggers': {
+            'config': {
+                'handlers': ['console'],
+                'level': 'WARN',
+                'propagate': False
+            },
+            'CouchDBAdapter': {
+                'handlers': ['console'],
+                'level': 'WARN',
+                'propagate': False
+            },
+        }
+    })
+
+
 class TestCase(unittest.TestCase):
     config_name = "testing"
     base_path = os.path.dirname(__file__)
@@ -34,6 +60,7 @@ class TestCase(unittest.TestCase):
         set_except_hook()
         from aioweb.config import set_config
         self.config = set_config(self.base_path, self.config_name)
+        test_logging()
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 

@@ -1,7 +1,7 @@
 import os
 import unittest
 import unittest.mock
-from aioweb.test import CouchDBTestCase
+from aioweb.db.couchdb_test import CouchDBTestCase
 from aioweb.test import run_test_server as run_server
 from .test import TestCase
 from .handler import (HomeHandler, FoodHandler, MealHandler, AuthHandler,
@@ -19,7 +19,6 @@ from .importer import import_sr25_nutr_def
 class HomeHandlerTest(CouchDBTestCase):
     def setUp(self):
         super(HomeHandlerTest, self).setUp()
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
         self.handler = HomeHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
@@ -36,7 +35,6 @@ class HomeHandlerTest(CouchDBTestCase):
 class AuthHandlerTest(CouchDBTestCase):
     def setUp(self):
         super(AuthHandlerTest, self).setUp()
-        self.loop.run_until_complete(User.sync_design(self.db))
         self.auth_handler = AuthHandler()
         transport = unittest.mock.Mock()
         self.auth_handler.response = transport
@@ -71,9 +69,9 @@ class AuthHandlerTest(CouchDBTestCase):
 
 
 class FoodHandlerTest(CouchDBTestCase):
+    base_path = os.path.dirname(__file__)
     def setUp(self):
         super(FoodHandlerTest, self).setUp()
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
         self.handler = FoodHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
@@ -87,8 +85,6 @@ class FoodHandlerTest(CouchDBTestCase):
 class MealHandlerTest(AuthHandlerTest):
     def setUp(self):
         super(MealHandlerTest, self).setUp()
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.loop.run_until_complete(Meal.sync_design(self.db))
         self.handler = FoodHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
@@ -137,12 +133,10 @@ class MealHandlerTest(AuthHandlerTest):
 class NutrientHandlerTest(AuthHandlerTest):
     def setUp(self):
         super(NutrientHandlerTest, self).setUp()
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.loop.run_until_complete(Meal.sync_design(self.db))
+        self.loop.run_until_complete(import_sr25_nutr_def(self.db))
         self.handler = NutrientHandler()
         self.transport = unittest.mock.Mock()
         self.handler.response = self.transport
-        import_sr25_nutr_def(self.db, self.loop)
 
     def test_list_nutrients(self):
         self.test_login()

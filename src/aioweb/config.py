@@ -14,7 +14,7 @@ def set_config(basepath, configfile='development'):
     global configpath
     config = configparser.ConfigParser()
     configpath = join(basepath, 'conf', "%s.ini" % configfile)
-    logging.debug("Reading config from: %s" % configpath)
+    logger.debug("Reading config from: %s" % configpath)
     config.read(default_config_path)
     config.read(configpath)
     try:
@@ -24,7 +24,8 @@ def set_config(basepath, configfile='development'):
         # python 3.4 addresses the issue of direclty passing config obj
         try:
             # try app config
-            logging.config.fileConfig(configpath)
+            logging.config.fileConfig(default_config_path)
+            logging.config.fileConfig(configpath, disable_existing_loggers=False)
         except Exception as e:
             logger.debug("falling back to default config")
             # fallback to default
