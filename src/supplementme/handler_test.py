@@ -70,6 +70,7 @@ class AuthHandlerTest(CouchDBTestCase):
 
 class FoodHandlerTest(CouchDBTestCase):
     base_path = os.path.dirname(__file__)
+
     def setUp(self):
         super(FoodHandlerTest, self).setUp()
         self.handler = FoodHandler()

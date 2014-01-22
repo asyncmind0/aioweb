@@ -3,11 +3,14 @@ from os.path import dirname, join
 import logging
 import logging.config
 import configparser
+import json
+from .util import deep_update
 config = None
 configpath = None
 default_config_path = join(dirname(__file__), "conf", "default.ini")
-
+default_logging_config_path = join(dirname(__file__), "conf", "logging.json")
 logger = logging.getLogger("config")
+
 
 def set_config(basepath, configfile='development'):
     global config
@@ -17,18 +20,22 @@ def set_config(basepath, configfile='development'):
     logger.debug("Reading config from: %s" % configpath)
     config.read(default_config_path)
     config.read(configpath)
-    try:
-        logging.config.fileConfig(config)
-    except Exception as e:
-        logger.debug("Not yet python 3.4")
-        # python 3.4 addresses the issue of direclty passing config obj
-        try:
-            # try app config
-            logging.config.fileConfig(default_config_path)
-            logging.config.fileConfig(configpath, disable_existing_loggers=False)
-        except Exception as e:
-            logger.debug("falling back to default config")
-            # fallback to default
-            logging.config.fileConfig(default_config_path)
-
     return config
+
+
+def configure_logging(basepath, configfile="logging"):
+    """Load logging config from json string textfile.
+    """
+    logging_config_path = join(basepath, 'conf', "%s.json" % configfile)
+    appconfig = {}
+    with open(default_logging_config_path, 'r') as config:
+        defaultconfig = json.loads(config.read())
+    try:
+        with open(logging_config_path, 'r') as config:
+            appconfig = json.loads(config.read())
+    except Exception as e:
+        logging.info("Falling back to default logging config.")
+    deep_update(appconfig, defaultconfig)
+    print(appconfig)
+    logging.config.dictConfig(appconfig)
+    return appconfig

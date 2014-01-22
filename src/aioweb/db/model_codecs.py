@@ -13,7 +13,7 @@ class ModelDecoder(JSONDecoder):
         logger = logging.getLogger(self.__class__.__name__)
 
         def from_json(json_object):
-            model = None
+            data = model = None
             if 'doc_type' in json_object:
                 doc_type = json_object['doc_type']
                 try:

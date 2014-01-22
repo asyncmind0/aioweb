@@ -43,8 +43,6 @@ ARGS.add_argument(
     default='./js/', type=str, help='Js root.')
 
 
-
-
 class ProtocolFactory(ServerHttpProtocol):
     def __call__(self):
         raise NotImplemented()
@@ -87,6 +85,7 @@ def startapp(protocol_factory=None):
 
     superviser = Superviser(args)
     superviser.start(protocol_factory, sslcontext)
+
 
 def main():
     startapp()

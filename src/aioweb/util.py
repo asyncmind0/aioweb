@@ -1,6 +1,6 @@
 import logging
-import sys
 from IPython.core import ultratb
+import collections
 
 
 class AioWebLogFormatter(logging.Formatter):
@@ -15,3 +15,15 @@ class AioWebLogFormatter(logging.Formatter):
         etype, evalue, etb = exc_info
         tblist = self.ftb.structured_traceback(etype, evalue, etb)
         return '\n'.join(tblist)
+
+
+def deep_update(d, u):
+    """http://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+    """
+    for k, v in u.items():
+        if isinstance(v, collections.Mapping):
+            r = deep_update(d.get(k, {}), v)
+            d[k] = r
+        else:
+            d[k] = u[k]
+    return d

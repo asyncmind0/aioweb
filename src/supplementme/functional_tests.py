@@ -8,8 +8,9 @@ from asyncio import protocols
 
 from subprocess import Popen, PIPE
 from .test import TestCase
-from aioweb.test import run_test_server, CouchDBTestCase
-from . import get_routes
+from aioweb.test import run_test_server
+from aioweb.db.couchdb_test import CouchDBTestCase
+from .routes import get_routes
 from .model import Nutrient, Meal
 from aioweb.auth import User
 from .importer import import_sr25_nutr_def
@@ -47,17 +48,17 @@ class _StreamReaderProtocol(protocols.Protocol):
         self.stream_reader.feed_eof()
 
 
-class FunctionalTests(CouchDBTestCase):
+class FunctionalTest(CouchDBTestCase):
+    base_path = os.path.dirname(__file__)
     def setUp(self):
-        super(FunctionalTests, self).setUp()
-        self.loop.run_until_complete(User.sync_design(self.db))
-        self.loop.run_until_complete(Nutrient.sync_design(self.db))
-        self.loop.run_until_complete(Meal.sync_design(self.db))
-        import_sr25_nutr_def(self.db, self.loop)
+        super(FunctionalTest, self).setUp()
+        import_sr25_nutr_def(self.db)
+
     def _run_phantom(self, url):
         # start subprocess and wrap stdin, stdout, stderr
         output = []
-        phantom_cmd = "phantomjs static/run-jasmine.js %s" % url
+        phantom_cmd = ("phantomjs %s/run-jasmine.js %s" 
+                       % (self.config['default']['staticroot'], url))
         print(phantom_cmd)
         p = Popen(phantom_cmd.split(),
                   stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -83,14 +84,11 @@ class FunctionalTests(CouchDBTestCase):
                     registered[asyncio.Task(stream.readline())] = stream
             timeout = 5.0
         return output
-
-    def test_main_page(self):
-        import logging
-        logging.basicConfig(level=logging.DEBUG)
+        
+    def _test_page(self, url):
         router = get_routes()
-        router.add_handler('/', get_routes())
         with run_test_server(self.loop, router=router, port=9999) as httpd:
-            url = httpd.url("/")
+            url = httpd.url(url)
             print(url)
             meth = 'get'
             r = self.loop.run_until_complete(
@@ -108,6 +106,12 @@ class FunctionalTests(CouchDBTestCase):
             for sp in spec:
                 print(sp['description'])
                 print("\t"+sp['status'])
+
+
+class MainPageFunctionalTests(FunctionalTest):
+
+    def test_main_page(self):
+        self._test_page("/")
 
     @broken
     def test_main_page_ghost(self):

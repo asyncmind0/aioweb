@@ -1,7 +1,8 @@
 import unittest
 import asyncio
 from aioweb.test import TestCase, TestModel, run_briefly
-from aioweb.db import CouchDBAdapter, get_db
+from aioweb.db import get_db
+from aioweb.db.couchdb import CouchDBAdapter
 
 
 class CouchDBAdapterTest(TestCase):

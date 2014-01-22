@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 import unittest
-
-
-
 import unittest.mock
 import gc
 import os
@@ -17,6 +14,8 @@ from aioweb.server import HttpServer as AppServer
 import urllib.parse
 from debug import set_except_hook
 from nose.tools import nottest
+from aioweb.util import deep_update
+from aioweb.config import configure_logging
 
 
 def run_briefly(loop):
@@ -27,15 +26,14 @@ def run_briefly(loop):
     loop.run_until_complete(t)
 
 
-def test_logging():
-    logging.config.dictConfig({
+def test_logging(config):
+    deep_update(config, {
         'version': 1,
         'disable_existing_loggers': False,
         'incremental': True,
         'formatters': {
             'standard': {
-                'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-            },
+                'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'},
         },
         'loggers': {
             'config': {
@@ -50,6 +48,7 @@ def test_logging():
             },
         }
     })
+    logging.config.dictConfig(config)
 
 
 class TestCase(unittest.TestCase):
@@ -60,7 +59,8 @@ class TestCase(unittest.TestCase):
         set_except_hook()
         from aioweb.config import set_config
         self.config = set_config(self.base_path, self.config_name)
-        test_logging()
+        loggingconfig = configure_logging(self.base_path)
+        test_logging(loggingconfig)
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 

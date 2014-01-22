@@ -1,30 +1,18 @@
 import os
 import imp
+import aioweb
+import supplementme
 from aioweb.server import HttpServer
 from aioweb.application import ProtocolFactory, startapp
 from aioweb.router import Router
-from aioweb.config import set_config
+from aioweb.config import set_config, configure_logging
 from aioweb.static_handler import StaticFileHandler
 from os.path import join, dirname
 from supplementme.importer import import_sr25_nutr_def
-from .model import (Meal, Food, Nutrient)
+from supplementme.model import (Meal, Food, Nutrient)
+from supplementme.routes import get_routes
 from aioweb.auth import User
 import logging
-
-
-def get_static_routes(router=None):
-    from aioweb.config import config
-    if not router:
-        router = Router()
-    router.add_handler('/favicon.ico', StaticFileHandler,
-                       dict(staticroot=config['default']['staticroot']))
-    router.add_handler('/dojo/', StaticFileHandler,
-                       dict(staticroot=config['default']['dojo'],
-                            baseurl="/dojo/"))
-    router.add_handler('/jasmine/', StaticFileHandler,
-                       dict(staticroot=config['default']['jasmine'],
-                            baseurl='/jasmine/'))
-    return router
 
 
 class SupplementMeProtocolFactory(ProtocolFactory):
@@ -33,8 +21,7 @@ class SupplementMeProtocolFactory(ProtocolFactory):
         try:
             import supplementme
             imp.reload(supplementme)
-            router = get_static_routes()
-            router.add_handler('/', supplementme.get_routes())
+            router = get_routes()
             self.router = router
             return HttpServer(self.router, debug=True, keep_alive=75)
         except Exception as e:
@@ -56,7 +43,7 @@ def init_database():
 def main():
     base_path = os.path.dirname(__file__)
     set_config(base_path, 'development')
-    logging.getLogger('static_paths').setLevel(logging.INFO)
+    configure_logging(base_path)
     init_database()
     startapp(SupplementMeProtocolFactory)
 

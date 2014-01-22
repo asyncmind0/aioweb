@@ -1,4 +1,4 @@
-from aioweb.test import CouchDBTestCase
+from aioweb.db.couchdb_test import CouchDBTestCase
 
 
 class CouchDBAdapterTest(CouchDBTestCase):

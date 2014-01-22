@@ -8,6 +8,7 @@ from .model import Nutrient, Food, Meal
 import asyncio
 from aioweb.auth import AuthController, authenticated
 import json
+from .forms import AuthForm
 
 
 class HomeHandler(Handler):
@@ -17,13 +18,16 @@ class HomeHandler(Handler):
         controller = NutrientsController()
         query = self.query
         keys = yield from controller.all()
-        keys = [n for n in keys]
         logging.debug("number of nutrients: %s" % len(keys))
-        scripts = []  # [{'src':'test.js'}]
+        scripts = [{'src': '/supplementme/main_test.js'},
+                   {'src': '/supplementme/main.js'}]
 
-        self.render('home', query=[{'key': key, 'value': value}
-                                   for key, value in query.items()],
-                    nutrients=keys, scripts=scripts)
+        body = self.renderer.render(
+            "home", query=[
+                {'key': key, 'value': value}
+                for key, value in query.items()],
+            nutrients=keys)
+        self.render('base', body=body, scripts=scripts)
 
 
 class AuthHandler(Handler):
@@ -36,6 +40,7 @@ class AuthHandler(Handler):
         session = yield from controller.login(
             form['username'].pop(), form['password'].pop())
         self.cookies = dict(userid=session.user._id, sessionid=session.id)
+        form = AuthForm()
         self.render(**dict(ok=True))
 
 
@@ -95,3 +100,22 @@ class NutrientHandler(Handler):
         self.controller = NutrientsController()
         result = yield from self.controller.all()
         self.render(result)
+
+
+class WidgetTestHandler(Handler):
+    renderer = HtmlRenderer([os.path.join(os.path.dirname(__file__), 'html')])
+
+    def __call__(self, request_args=None, **kwargs):
+        controller = NutrientsController()
+        query = self.query
+        keys = yield from controller.all()
+        logging.debug("number of nutrients: %s" % len(keys))
+        scripts = [{'src': '/supplementme/nutrient_test.js'},
+                   {'src': '/supplementme/nutrient.js'}]
+
+        body = self.renderer.render(
+            "%s_test" % request_args[0], query=[
+                {'key': key, 'value': value}
+                for key, value in query.items()],
+            nutrients=keys)
+        self.render('base', body=body, scripts=scripts)
