@@ -31,8 +31,7 @@ class HtmlRenderer(object):
         return add_scripts
 
     def render(self, template_name, *args, **kwargs):
-        if 'scripts' in kwargs:
-            kwargs['scripts'] = self.render_scripts(kwargs['scripts'])
+        kwargs['scripts'] = self.render_scripts(kwargs.get('scripts', []))
         renderer = pystache.Renderer(search_dirs=self.template_dirs)
         return renderer.render_name(template_name, *args, **kwargs).encode()
 

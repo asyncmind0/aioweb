@@ -1,3 +1,4 @@
+from debug import pprint, pprintxml, shell, profile, debug as sj_debug
 import os
 import sys
 import json
@@ -85,7 +86,7 @@ class FunctionalTest(CouchDBTestCase):
             timeout = 5.0
         return output
         
-    def _test_page(self, url):
+    def _test_page(self, url, pause=False):
         router = get_routes()
         with run_test_server(self.loop, router=router, port=9999) as httpd:
             url = httpd.url(url)
@@ -93,6 +94,9 @@ class FunctionalTest(CouchDBTestCase):
             meth = 'get'
             r = self.loop.run_until_complete(
                 self._run_phantom(url))
+            if pause:
+                sj_debug() ###############################################################
+                pass
             spec = []
             startspec = False
             for line in r:

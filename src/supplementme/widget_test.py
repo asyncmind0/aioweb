@@ -22,4 +22,4 @@ from .functional_tests import FunctionalTest
 
 class NutientTest(FunctionalTest):
     def test_load(self):
-        self._test_page("/test/nutrientwidget")
+        self._test_page("/test/nutrientwidget", pause=True)

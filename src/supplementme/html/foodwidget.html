@@ -44,29 +44,8 @@
     </select>
     <br>
     <label >Nutrients:</label>
-    <select class="nutrient-select"
-            data-dojo-attach-point="nutrientsSelect">
-    </select>
-    <input type="text" class="nutrient-quantity"
-           value="0"
-            required="false"
-           data-dojo-props="placeHolder: 'Quantity', smallDelta:0.1"
-           data-dojo-attach-point="nutrientQuantity"
-           data-dojo-type="dijit/form/NumberSpinner"/>
-    <select name="nutrient-unit"
-            required="false"
-            data-dojo-attach-point="nutrientUnit"
-            data-dojo-type="dijit/form/Select">
-      <option value="mg">Milligrams</option>
-      <option value="g" selected="selected">Grams</option>
-    </select>
-
-    <button class="add-nutrients-button"
-            type="button"
-            data-dojo-attach-point="addNutrients"
-            data-dojo-attach-event="ondijitclick:onAddNutrient">
-      +
-    </button>
+    <div data-dojo-type="supplementme.NutrientWidget" 
+         data-dojo-attach-point="nutrientWidget"></div>
     <br>
     <ol data-dojo-attach-point="nutrientsList">
     </ol>

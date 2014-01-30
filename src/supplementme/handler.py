@@ -110,8 +110,9 @@ class WidgetTestHandler(Handler):
         query = self.query
         keys = yield from controller.all()
         logging.debug("number of nutrients: %s" % len(keys))
-        scripts = [{'src': '/supplementme/nutrient_test.js'},
-                   {'src': '/supplementme/nutrient.js'}]
+        #scripts = [{'src': '/supplementme/NutrientWidget_test.js'},
+        #           {'src': '/supplementme/NutrientWidget.js'}]
+        scripts = []
 
         body = self.renderer.render(
             "%s_test" % request_args[0], query=[
