@@ -18,7 +18,7 @@ require([
     declare("supplementme.MealWidget",
             [_WidgetBase, _TemplatedMixin, 
              _WidgetsInTemplateMixin, _OnDijitClickMixin,
-             JsonRest, Memory, Cache, Observable, supplementme.FoodWidget
+             JsonRest, Memory, Cache, Observable
             ], {
                 templateString: meal_template,
                 constructor: function(args){

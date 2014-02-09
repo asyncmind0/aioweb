@@ -19,6 +19,9 @@ require([
     "dojo/request",
     "dojo/text!supplementme/foodwidget.html", 
     "dojo/text!supplementme/mealwidget.html", 
+    "supplementme/MealWidget",
+    "supplementme/FoodWidget",
+    "supplementme/NutrientWidget"
 ], function(declare, _WidgetBase,
             _TemplatedMixin, _WidgetsInTemplateMixin,
             _OnDijitClickMixin,

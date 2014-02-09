@@ -1,6 +1,6 @@
 require(["doh", "dojo/_base/declare", "dojo/ready", "dojo/query",
     "dijit/registry", "dojo/_base/array", "doh/runner",
-    "dojo/dom-attr", "dojo/on", "supplementme/main", "supplementme/interntest" ], 
+    "dojo/dom-attr", "dojo/on", "supplementme/main" ], 
 function(doh, declare, ready, query, registry, array, runner, domAttr,on) {
     window.jsApiReporter = {};
     doh._report = function(){
