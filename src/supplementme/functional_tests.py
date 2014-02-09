@@ -51,15 +51,18 @@ class _StreamReaderProtocol(protocols.Protocol):
 
 class FunctionalTest(CouchDBTestCase):
     base_path = os.path.dirname(__file__)
+    runner = "dojo"
+
     def setUp(self):
         super(FunctionalTest, self).setUp()
-        import_sr25_nutr_def(self.db)
+        self.loop.run_until_complete(import_sr25_nutr_def(self.db))
 
     def _run_phantom(self, url):
         # start subprocess and wrap stdin, stdout, stderr
         output = []
-        phantom_cmd = ("phantomjs %s/run-jasmine.js %s" 
-                       % (self.config['default']['staticroot'], url))
+        phantom_cmd = ("phantomjs %s/run-%s.js %s"
+                       % (self.config['default']['staticroot'],
+                          self.runner, url))
         print(phantom_cmd)
         p = Popen(phantom_cmd.split(),
                   stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -95,10 +98,11 @@ class FunctionalTest(CouchDBTestCase):
             r = self.loop.run_until_complete(
                 self._run_phantom(url))
             if pause:
-                sj_debug() ###############################################################
                 pass
             spec = []
             startspec = False
+            sj_debug() ###############################################################
+            print ("\n".join(r))
             for line in r:
                 if line.startswith('ENDSPEC'):
                     break

@@ -46,6 +46,20 @@ def test_logging(config):
                 'level': 'WARN',
                 'propagate': False
             },
+            "asyncio": {
+                "propagate": 'false', 
+                "handlers": [
+                    "console"
+                ],
+                "level": "WARN"
+            },
+            "static_paths": {
+                "propagate": 'false', 
+                "handlers": [
+                    "console"
+                ],
+                "level": "WARN"
+            },
         }
     })
     logging.config.dictConfig(config)

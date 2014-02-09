@@ -1,40 +1,44 @@
 require([
-    "dojo/ready", "dojo/query", "dijit/registry", "dojo/_base/array",
-    "doh/runner", "dojo/dom-attr", "dojo/on", "supplementme/main", "supplementme/test"
-], function (ready, query, registry, array, runner, domAttr,on, main, test) {
-    ready(function () {
-        describe("nutrient widget", function(){
-            beforeEach(function(done) {
-                this.foodWidgetDomNode = query('.food-widget')[0];
-                this.foodWidget = registry.byNode(this.foodWidgetDomNode);
-                this.nutrientWidget = this.foodWidget.nutrientWidget;
-                test.set_nutrient_form(this.foodWidget.nutrientWidget);
-                setTimeout(function() {
-                    done();
-                }, 1000);
-            });
-            it("should be visible", function(){
-                   expect(this.foodWidgetDomNode).not.toBeNull();
-               });
-            it("should add nutrients on click add",function(done){
+    "dojo/ready", "dojo/_base/declare", "dojo/query", "dijit/registry", "dojo/_base/array",
+    "doh/runner", "dojo/dom-attr", "dojo/on", "supplementme/main", "supplementme/test",
+    "dojo/domReady!"
+], function (ready, declare, query, registry, array, runner, domAttr,on, main, test) {
+    declare("supplementme.FoodWidget_test", supplementme.test, {
+        constructor: function(args){
+            declare.safeMixin(this, args);
+            this.suite = "food widget tests";
+        },
+        setUp: function(){
+            this.foodWidgetDomNode = query('.food-widget')[0];
+            this.foodWidget = registry.byNode(this.foodWidgetDomNode);
+            this.nutrientWidget = this.foodWidget.nutrientWidget;
+            this.set_nutrient_form(this.foodWidget.nutrientWidget);
+        },
+        tests: {
+            "should be visible": function(){
+                doh.assertTrue(this.foodWidgetDomNode);
+            },
+            "should add nutrients on click add": function(){
                 var nutrientAddBtn = query('.add-nutrients-button')[0];
                 on.emit(nutrientAddBtn, "click", {
-                     bubbles: true,
-                     cancelable: true
+                    bubbles: true,
+                    cancelable: true
                 });
-                var no = expect(query(
-                    'li', this.foodWidget.nutrientsList).length).toBeGreaterThan(0);
-                done();
-            });
-            it("should save food on click save",function(done){
+                doh.assertTrue(query(
+                    'li', this.foodWidget.nutrientsList).length > 0);
+            },
+            "should save food on click save":function(){
                 var foodSaveBtn = query('.save-food-button')[0];
                 on.emit(foodSaveBtn, "click", {
-                     bubbles: true,
-                     cancelable: true
+                    bubbles: true,
+                    cancelable: true
                 });
-                expect(false).toBe(true);
-                done();
-            });
-        });
+            }
+        }
+    });
+    ready(function () {
+        var testsuite = new supplementme.FoodWidget_test();
+        testsuite.registerTests();
+        doh.run();
     });
 });

@@ -18,6 +18,9 @@ def get_routes(router=None):
     router.add_handler('/jasmine/', StaticFileHandler,
                        dict(staticroot=config['default']['jasmine'],
                             baseurl='/jasmine/'))
+    router.add_handler('/intern/', StaticFileHandler,
+                       dict(staticroot=config['default']['intern'],
+                            baseurl='/intern/'))
 
     app_routes = Router("/", (
         ("/$", HomeHandler),

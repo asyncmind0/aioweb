@@ -1,7 +1,6 @@
 import os
 import unittest
 import unittest.mock
-from aioweb.db.couchdb_test import CouchDBTestCase
 from aioweb.test import run_test_server as run_server
 from .test import TestCase
 from .handler import (HomeHandler, FoodHandler, MealHandler, AuthHandler,
@@ -9,14 +8,14 @@ from .handler import (HomeHandler, FoodHandler, MealHandler, AuthHandler,
 from .controller import UserController
 from .model import Nutrient, Food, Meal
 from aioweb.auth import User
-from . import get_routes
+from .routes import get_routes
 import asyncio
 from aiohttp import client, server
 import json
 from .importer import import_sr25_nutr_def
 
 
-class HomeHandlerTest(CouchDBTestCase):
+class HomeHandlerTest(TestCase):
     def setUp(self):
         super(HomeHandlerTest, self).setUp()
         self.handler = HomeHandler()
@@ -32,7 +31,7 @@ class HomeHandlerTest(CouchDBTestCase):
         assert len(self.transport.write.call_args[0][0]) > 0
 
 
-class AuthHandlerTest(CouchDBTestCase):
+class AuthHandlerTest(TestCase):
     def setUp(self):
         super(AuthHandlerTest, self).setUp()
         self.auth_handler = AuthHandler()
@@ -68,7 +67,7 @@ class AuthHandlerTest(CouchDBTestCase):
             r.close()
 
 
-class FoodHandlerTest(CouchDBTestCase):
+class FoodHandlerTest(TestCase):
     base_path = os.path.dirname(__file__)
 
     def setUp(self):

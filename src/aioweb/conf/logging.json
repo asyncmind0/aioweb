@@ -34,6 +34,13 @@
                 "console"
             ], 
             "level": "WARN"
+        },
+        "static_paths": {
+            "propagate": false, 
+            "handlers": [
+                "console"
+            ],
+            "level": "WARN"
         }
     }, 
     "version": 1
