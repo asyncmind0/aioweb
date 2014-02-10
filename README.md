@@ -1,3 +1,5 @@
+# Moved to https://bitbucket.org/jagguli/aioweb
+
 # A Web Framework using pep-3156 async constructs.
 
  - templating: curently mustache, but can be overriden using custom renderers
