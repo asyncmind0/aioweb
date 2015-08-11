@@ -43,3 +43,7 @@ The tests are mostly up to date :)
   - find the tests along with the *.py files.
 
 Any constructive criticism would be much appreciated. 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/jagguli/aioweb/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
